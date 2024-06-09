@@ -8,7 +8,7 @@
     "codegen": "npx swagger-typescript-api -p src/shared/api/swagger.json -o src/shared/api/generated --axios",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "build-only": "vite build --module",
+    "build-only": "vite build",
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
