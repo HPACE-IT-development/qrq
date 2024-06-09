@@ -4,7 +4,8 @@ import NProgress from 'nprogress';
 const token = localStorage.getItem('token');
 export const $api = new Api({
   // baseURL: '/core/api/v1',
-  baseURL: 'https://virtserver.swaggerhub.com/riderufa/qrq_core/1.0.0',
+  // @ts-ignore
+  baseURL:  import.meta.env.API_URL,
 });
 
 $api.instance.interceptors.request.use((config) => {
@@ -26,9 +27,11 @@ $api.instance.interceptors.response.use(
   },
 );
 
+
 export const $qwepApi = new Api({
-  baseURL: '/qwep/api/v1',
-  // baseURL: 'https://virtserver.swaggerhub.com/riderufa/qrq_core/1.0.0',
+  // baseURL: '/qwep/api/v1',
+  // @ts-ignore
+  baseURL: import.meta.env.API_URL,
 });
 
 $qwepApi.instance.interceptors.request.use((config) => {
