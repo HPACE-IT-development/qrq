@@ -10,7 +10,7 @@
   } from '@/shared/ui';
   import { ChevronDown, X } from 'lucide-vue-next';
   import { useUnit } from 'effector-vue/composition';
-  import { onMounted, onUnmounted } from 'vue';
+  import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
   import { useCreateAdvertisementForm } from '../lib/create-form';
   import {
     $advertisementType,
@@ -19,17 +19,29 @@
     createAdvertisementMounted,
     formClosed,
     formSubmitted,
-    getBrands,
-    getCategories,
+    getArticles,
+    getDestinations,
+    getNames,
+    getNomenclatures,
   } from '../model/create-advertisement';
   import {
     Listbox,
     ListboxButton,
     ListboxOption,
     ListboxOptions,
+    TransitionRoot,
+    TransitionChild,
   } from '@headlessui/vue';
   import { cn } from '@/shared/lib';
   import { ScrollArea } from '@/shared/ui/scroll-area';
+  import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogDescription,
+  } from '@headlessui/vue'
+  import SuggestionInput from '@/shared/ui/input/suggestion-input.vue';
+
 
   const emit = defineEmits(['close']);
   const { advertisementTypeSelected: handleSelectedType, $formMode: formMode } =
@@ -38,20 +50,29 @@
       $formMode,
     });
 
-  const { data: categories } = useUnit(getCategories);
-  const { data: brands } = useUnit(getBrands);
+  // const { data: categories } = useUnit(getCategories);
+  // const { data: brands } = useUnit(getBrands);
 
   const advertisementType = useUnit($advertisementType);
 
-  const { form, category, brand } = useCreateAdvertisementForm(
+  const { data: nomenclatures } = useUnit(getNomenclatures)
+  const { data: destinations } = useUnit(getDestinations)
+  const { data: articles } = useUnit(getArticles)
+  const { data: names } = useUnit(getNames)
+
+  const { form, article, name, destination } = useCreateAdvertisementForm(
     advertisementType.value,
   );
+
+  const findedNomenclature = ref();
+  const countOfChangesNomenclature = ref(0);
 
   const onSubmit = async () => {
     await form.validate();
     console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       emit('close');
+      console.log(form.values);
       formSubmitted(form.values);
     }
   };
@@ -60,6 +81,20 @@
     emit('close');
     formClosed();
   }
+  const popoverOpened = ref(true);
+
+  watch([() => name.value, () => article.value, () => countOfChangesNomenclature.value], (array) => {
+    console.log(countOfChangesNomenclature.value);
+    if (countOfChangesNomenclature.value >= 4) {
+      popoverOpened.value = true
+    } else if (array[0] || array[1]) {
+      findedNomenclature.value = nomenclatures.value?.data?.filter((nomenclature) => article.value === nomenclature.article || name.value === nomenclature.name)[0];
+      article.value = findedNomenclature.value?.article
+      name.value = findedNomenclature.value?.name
+      destination.value = destinations.value?.data.filter((destination) => findedNomenclature.value.destination === destination.id)[0]?.name
+      countOfChangesNomenclature.value = countOfChangesNomenclature.value + 1
+    }
+  })
 
   onMounted(() => {
     createAdvertisementMounted();
@@ -91,7 +126,7 @@
           alt="arrow" />
       </Button>
       <p class="cursor-default text-[18px] font-semibold leading-3">
-        Размещение {{ advertisementType === 'sell' ? 'объявления' : 'заявки' }}
+        Заявка на {{ advertisementType === 'sell' ? 'продажу' : 'покупку' }}
       </p>
       <Button
         v-if="formMode === 'form'"
@@ -124,35 +159,36 @@
       </template>
       <template v-else>
         <form @submit="onSubmit" class="my-5 flex w-full flex-col gap-y-4 px-5">
-          <FormField v-slot="{ componentField }" name="name">
-            <FormItem>
-              <FormLabel>Наименование</FormLabel>
-              <FormControl>
-                <Input
-                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
-                  type="text"
-                  placeholder="Наименование"
-                  v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-          <FormField v-slot="{ componentField }" name="article">
-            <FormItem>
-              <FormLabel>Артикул</FormLabel>
-              <FormControl>
-                <Input
-                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
-                  type="text"
-                  placeholder="Артикул"
-                  v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+          <suggestion-input
+            :default-value='name'
+            :options='names'
+            label='Наименование'
+
+            @select='selectedName => name = selectedName.name'
+          />
+          <suggestion-input
+            :default-value='article'
+            :options='articles'
+            label='Артикул'
+
+            @select='selectedArticle => article = selectedArticle.name'
+          />
+<!--          <FormField v-slot="{ componentField }" name="article">-->
+<!--            <FormItem>-->
+<!--              <FormLabel>Артикул</FormLabel>-->
+<!--              <FormControl>-->
+<!--                <Input-->
+<!--                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"-->
+<!--                  type="text"-->
+<!--                  placeholder="Артикул"-->
+<!--                  v-bind="componentField" />-->
+<!--              </FormControl>-->
+<!--              <FormMessage />-->
+<!--            </FormItem>-->
+<!--          </FormField>-->
           <FormField v-slot="{ componentField }" name="count">
             <FormItem>
-              <FormLabel>Количество</FormLabel>
+              <FormLabel class='pb-2 text-[14px] font-semibold text-[#101828]'>Количество</FormLabel>
 
               <FormControl>
                 <Input
@@ -164,39 +200,10 @@
               <FormMessage />
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="price">
-            <FormItem>
-              <FormLabel>Цена</FormLabel>
-
-              <FormControl>
-                <Input
-                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
-                  type="number"
-                  placeholder="Цена"
-                  v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-          <FormField v-slot="{ componentField }" name="available">
-            <FormItem>
-              <FormLabel>Срок до клиента</FormLabel>
-
-              <FormControl>
-                <Input
-                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
-                  type="number"
-                  placeholder="Срок до клиента"
-                  v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
           <div class="relative inline-block text-left">
-            <Listbox v-model="category">
+            <Listbox v-model="destination">
               <p class="pb-2 text-[14px] font-semibold text-[#101828]">
-                Категория
+                Назначение
               </p>
               <ListboxButton
                 class="inline-flex w-full justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
@@ -204,12 +211,12 @@
                   :class="
                     cn(
                       'text-[16px] font-normal tracking-wide text-[#858FA3]',
-                      category && 'text-black',
+                      destinations && 'text-black',
                     )
                   ">
                   {{
-                    categories?.data?.find((value) => value.id === category)
-                      ?.name ?? 'Категория'
+                    destinations?.data?.find((data) => data.id === destination)?.name
+                    ?? 'Назначение'
                   }}
                 </p>
                 <ChevronDown color="#858FA3" class="h-5 w-5" />
@@ -222,14 +229,14 @@
                 <ListboxOptions
                   class="absolute z-10 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                   <ListboxOption
-                    v-if="categories?.data"
-                    v-for="item in categories?.data"
+                    v-if="destinations?.data"
+                    v-for="item in destinations?.data"
                     :value="item.id">
                     <li
                       :class="
                         cn(
                           'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
-                          category === parseInt(item?.id ?? '0') &&
+                          destination === item.name &&
                             'bg-gray-200 text-black',
                         )
                       ">
@@ -242,57 +249,24 @@
               </transition>
             </Listbox>
           </div>
+<!--          <FormField v-slot="{ componentField }" name="available">-->
+<!--            <FormItem>-->
+<!--              <FormLabel>Срок до клиента</FormLabel>-->
 
-          <div class="relative mb-5 inline-block text-left">
-            <Listbox v-model="brand">
-              <p class="pb-2 text-[14px] font-semibold text-[#101828]">Бренд</p>
-              <ListboxButton
-                class="inline-flex w-full justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
-                <p
-                  :class="
-                    cn(
-                      'text-[16px] font-normal tracking-wide text-[#858FA3]',
-                      brand && 'text-black',
-                    )
-                  ">
-                  {{
-                    brands?.data?.find((value) => value.id === brand)?.name ??
-                    'Бренд'
-                  }}
-                </p>
-                <ChevronDown color="#858FA3" class="h-5 w-5" />
-              </ListboxButton>
-
-              <transition
-                leave-active-class="transition ease-in duration-100"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0">
-                <ListboxOptions
-                  class="absolute w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <ListboxOption
-                    v-if="brands?.data"
-                    v-for="item in brands?.data"
-                    :value="item.id">
-                    <li
-                      :class="
-                        cn(
-                          'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
-                          brand === parseInt(item?.id ?? '0') &&
-                            'bg-gray-200 text-black',
-                        )
-                      ">
-                      <span class="block truncate font-normal">
-                        {{ item.name }}
-                      </span>
-                    </li>
-                  </ListboxOption>
-                </ListboxOptions>
-              </transition>
-            </Listbox>
-          </div>
+<!--              <FormControl>-->
+<!--                <Input-->
+<!--                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"-->
+<!--                  type="number"-->
+<!--                  placeholder="Срок до клиента"-->
+<!--                  v-bind="componentField" />-->
+<!--              </FormControl>-->
+<!--              <FormMessage />-->
+<!--            </FormItem>-->
+<!--          </FormField>-->
         </form>
       </template>
     </ScrollArea>
+<!--    {{ popoverOpened }}-->
     <div
       v-if="advertisementType"
       class="mt-auto flex w-full items-center justify-center border-t border-[#D0D4DB] p-4">
@@ -300,5 +274,51 @@
         Опубликовать заявку
       </Button>
     </div>
+<!--    <TransitionRoot appear :show="popoverOpened" as="template">-->
+<!--      <Dialog as="div" @close="popoverOpened = !popoverOpened" class="relative z-2 w-full">-->
+<!--        <TransitionChild-->
+<!--            as="template"-->
+<!--            enter="duration-300 ease-out"-->
+<!--            enter-from="opacity-0"-->
+<!--            enter-to="opacity-100"-->
+<!--            leave="duration-200 ease-in"-->
+<!--            leave-from="opacity-100"-->
+<!--            leave-to="opacity-0"-->
+<!--        >-->
+<!--          <div class="fixed inset-0 bg-black/25" />-->
+<!--        </TransitionChild>-->
+
+<!--        <div class="fixed inset-0 overflow-y-auto">-->
+<!--          <div-->
+<!--              class="flex min-h-full items-center justify-center p-4 text-center"-->
+<!--          >-->
+<!--            <TransitionChild-->
+<!--                as="template"-->
+<!--                enter="duration-300 ease-out"-->
+<!--                enter-from="opacity-0 scale-95"-->
+<!--                enter-to="opacity-100 scale-100"-->
+<!--                leave="duration-200 ease-in"-->
+<!--                leave-from="opacity-100 scale-100"-->
+<!--                leave-to="opacity-0 scale-95"-->
+<!--            >-->
+<!--              <DialogPanel>-->
+<!--                <DialogTitle>Deactivate account</DialogTitle>-->
+<!--                <DialogDescription>-->
+<!--                  This will permanently deactivate your account-->
+<!--                </DialogDescription>-->
+
+<!--                <p>-->
+<!--                  Are you sure you want to deactivate your account? All of your data will be-->
+<!--                  permanently removed. This action cannot be undone.-->
+<!--                </p>-->
+
+<!--                <button @click="">Deactivate</button>-->
+<!--                <button @click="">Cancel</button>-->
+<!--              </DialogPanel>-->
+<!--            </TransitionChild>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </Dialog>-->
+<!--    </TransitionRoot>-->
   </div>
 </template>

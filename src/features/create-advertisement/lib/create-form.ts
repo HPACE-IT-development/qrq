@@ -5,8 +5,11 @@ import * as z from 'zod';
 
 export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
   form: FormContext<any, {}>;
-  category: Ref<number | undefined>;
-  brand: Ref<number | undefined>;
+  // category: Ref<number | undefined>;
+  // brand: Ref<number | undefined>;
+  article: Ref<string | undefined>;
+  name: Ref<string | undefined>;
+  destination: Ref<string | undefined>;
 } {
   const buySchema = toTypedSchema(
     z.object({
@@ -20,8 +23,8 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
           invalid_type_error: 'Введите количество',
         })
         .min(1, 'Введите количество'),
-      category: z.number({ required_error: 'Выберите категорию' }),
-      brand: z.number().optional(),
+      // category: z.number({ required_error: 'Выберите категорию' }),
+      destination: z.string().optional(),
     }),
   );
 
@@ -33,14 +36,14 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
       article: z.string().optional(),
       count: z
         .number({
-          required_error: 'Введите количество',
-          invalid_type_error: 'Введите количество',
+            required_error: 'Введите количество',
+            invalid_type_error: 'Введите количество',
         })
         .min(1, 'Введите количество'),
-      category: z.number({ required_error: 'Выберите категорию' }),
-      brand: z.number().optional(),
-      price: z.number({ required_error: 'Введите цену' }),
-      available: z.number({ required_error: 'Введите наличие' }),
+      // category: z.number({ required_error: 'Выберите категорию' }),
+      destination: z.string().optional(),
+      // price: z.number({ required_error: 'Введите цену' }),
+      // available: z.number({ required_error: 'Введите наличие' }),
     }),
   );
 
@@ -48,12 +51,14 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
     validationSchema: mode === 'sell' ? sellSchema : buySchema,
   });
 
-  const [category] = form.defineField('category');
-  const [brand] = form.defineField('brand');
+  const [article] = form.defineField('article');
+  const [name] = form.defineField('name');
+  const [destination] = form.defineField('destination');
 
   return {
     form,
-    category,
-    brand,
+    article,
+    name,
+    destination,
   };
 }

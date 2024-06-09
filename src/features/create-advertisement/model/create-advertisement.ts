@@ -12,10 +12,11 @@ export interface FormValues {
   name: string;
   article: string;
   count: string;
-  category: number;
+  category?: number;
   brand?: number;
   price?: number;
   available?: number;
+  destination?: number;
 }
 
 const createOfferMutation = createMutation({
@@ -37,9 +38,51 @@ const createBidMutation = createMutation({
 export const getCategories = createQuery({
   handler: () => $api.categories.getCategories(),
 });
+
 export const getBrands = createQuery({
   handler: () => $api.brands.getBrands(),
 });
+
+export const getNomenclatures = createQuery({
+  handler: () => $api.nomenclatures.getNomenclatures()
+})
+
+export const getDestinations = createQuery({
+    handler: () => $api.destinations.getDestinations()
+})
+
+export const getArticles = createQuery({
+  handler: () => $api.nomenclatures.getNomenclatures()
+    .then((response) => response.data.map((nomenclature) => {
+      return {
+        id: nomenclature.id,
+        name: nomenclature.article
+      }
+    }))
+})
+
+export const getNames = createQuery({
+  handler: () => $api.nomenclatures.getNomenclatures()
+    .then((response) => response.data.map((nomenclature) => {
+      return {
+        id: nomenclature.id,
+        name: nomenclature.name
+      }
+    }))
+})
+
+export const createNomenclature =  createMutation({
+  handler: async (data: FormValues) =>
+      $api.nomenclatures.createNomenclature(
+          Object.assign(
+              {
+                  name: data.name,
+                  article: data.article,
+                  destination: data.destination
+              },
+          ),
+      ),
+})
 
 export const advertisementTypeSelected = createEvent<TAdvertisementType>();
 export const formClosed = createEvent();
@@ -54,8 +97,13 @@ export const $formMode = createStore<TFormMode>('selectType').reset([
 ]);
 
 sample({
+    clock: formSubmitted,
+    target: createNomenclature.start,
+});
+
+sample({
   clock: createAdvertisementMounted,
-  target: [getCategories.start, getBrands.start],
+  target: [getArticles.start, getNames.start, getNomenclatures.start, getDestinations.start],
 });
 
 sample({
