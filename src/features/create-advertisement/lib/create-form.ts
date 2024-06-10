@@ -9,7 +9,7 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
   // brand: Ref<number | undefined>;
   article: Ref<string | undefined>;
   name: Ref<string | undefined>;
-  destination: Ref<string | undefined>;
+  destination: Ref<number | undefined>;
 } {
   const buySchema = toTypedSchema(
     z.object({
@@ -24,7 +24,7 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
         })
         .min(1, 'Введите количество'),
       // category: z.number({ required_error: 'Выберите категорию' }),
-      destination: z.string().optional(),
+      destination: z.number().optional(),
     }),
   );
 
@@ -41,7 +41,7 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
         })
         .min(1, 'Введите количество'),
       // category: z.number({ required_error: 'Выберите категорию' }),
-      destination: z.string().optional(),
+      destination: z.number().optional(),
       // price: z.number({ required_error: 'Введите цену' }),
       // available: z.number({ required_error: 'Введите наличие' }),
     }),

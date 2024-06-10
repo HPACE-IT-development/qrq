@@ -10,7 +10,7 @@
   } from '@/shared/ui';
   import { ChevronDown, X } from 'lucide-vue-next';
   import { useUnit } from 'effector-vue/composition';
-  import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+  import { onMounted, onUnmounted, ref, watch } from 'vue';
   import { useCreateAdvertisementForm } from '../lib/create-form';
   import {
     $advertisementType,
@@ -23,6 +23,7 @@
     getDestinations,
     getNames,
     getNomenclatures,
+    $nomenclatureType, nomenclatureTypeSelected,
   } from '../model/create-advertisement';
   import {
     Listbox,
@@ -34,19 +35,14 @@
   } from '@headlessui/vue';
   import { cn } from '@/shared/lib';
   import { ScrollArea } from '@/shared/ui/scroll-area';
-  import {
-    Dialog,
-    DialogPanel,
-    DialogTitle,
-    DialogDescription,
-  } from '@headlessui/vue'
   import SuggestionInput from '@/shared/ui/input/suggestion-input.vue';
 
 
   const emit = defineEmits(['close']);
-  const { advertisementTypeSelected: handleSelectedType, $formMode: formMode } =
+  const { advertisementTypeSelected: handleSelectedType, $formMode: formMode, nomenclatureTypeSelected: handleNomenclatureType } =
     useUnit({
       advertisementTypeSelected,
+      nomenclatureTypeSelected,
       $formMode,
     });
 
@@ -54,6 +50,7 @@
   // const { data: brands } = useUnit(getBrands);
 
   const advertisementType = useUnit($advertisementType);
+  const nomenclatureType = useUnit($nomenclatureType);
 
   const { data: nomenclatures } = useUnit(getNomenclatures)
   const { data: destinations } = useUnit(getDestinations)
@@ -65,34 +62,44 @@
   );
 
   const findedNomenclature = ref();
-  const countOfChangesNomenclature = ref(0);
+  const type = ref("");
 
   const onSubmit = async () => {
     await form.validate();
     console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       emit('close');
-      console.log(form.values);
       formSubmitted(form.values);
     }
   };
+
+  const update = async () => {
+    handleNomenclatureType('update')
+    formSubmitted(findedNomenclature.value)
+    popoverOpened.value = false;
+  }
 
   function handleClose() {
     emit('close');
     formClosed();
   }
-  const popoverOpened = ref(true);
+  const popoverOpened = ref(false);
 
-  watch([() => name.value, () => article.value, () => countOfChangesNomenclature.value], (array) => {
-    console.log(countOfChangesNomenclature.value);
-    if (countOfChangesNomenclature.value >= 4) {
+  watch([() => name.value, () => article.value, () => destination.value], (array) => {
+    if (type.value === 'changed') {
       popoverOpened.value = true
-    } else if (array[0] || array[1]) {
+    } else {
       findedNomenclature.value = nomenclatures.value?.data?.filter((nomenclature) => article.value === nomenclature.article || name.value === nomenclature.name)[0];
       article.value = findedNomenclature.value?.article
       name.value = findedNomenclature.value?.name
-      destination.value = destinations.value?.data.filter((destination) => findedNomenclature.value.destination === destination.id)[0]?.name
-      countOfChangesNomenclature.value = countOfChangesNomenclature.value + 1
+      destination.value = findedNomenclature.value?.id
+      if (type.value === 'new') {
+        type.value = 'changed'
+      } else {
+        type.value = 'new'
+        handleNomenclatureType('create')
+        onSubmit();
+      }
     }
   })
 
@@ -116,10 +123,10 @@
 
 <template>
   <div
-    class="absolute bottom-0 left-0 top-0 flex h-screen w-full flex-col items-center border-b border-r border-[#D0D4DB] bg-white md:max-w-[356px]">
+    class="absolute bottom-0 left-0 top-0 flex h-screen w-full flex-col items-center border-b border-r border-[#D0D4DB] bg-white md:max-w-[356px] z-3">
     <div
       class="flex w-full items-center justify-start gap-x-2 border-b border-[#D0D4DB] px-4 py-2">
-      <Button class="-ml-2" @click="handleClose" size="icon" variant="ghost">
+      <Button @click="handleClose" size="icon" variant="ghost">
         <img
           src="./assets/backicon.svg"
           class="h-6 w-6 select-none"
@@ -164,14 +171,14 @@
             :options='names'
             label='Наименование'
 
-            @select='selectedName => name = selectedName.name'
+            @select='(selectedName: any) => name = selectedName.name'
           />
           <suggestion-input
             :default-value='article'
             :options='articles'
             label='Артикул'
 
-            @select='selectedArticle => article = selectedArticle.name'
+            @select='(selectedArticle: any) => article = selectedArticle.name'
           />
 <!--          <FormField v-slot="{ componentField }" name="article">-->
 <!--            <FormItem>-->
@@ -274,51 +281,39 @@
         Опубликовать заявку
       </Button>
     </div>
-<!--    <TransitionRoot appear :show="popoverOpened" as="template">-->
-<!--      <Dialog as="div" @close="popoverOpened = !popoverOpened" class="relative z-2 w-full">-->
-<!--        <TransitionChild-->
-<!--            as="template"-->
-<!--            enter="duration-300 ease-out"-->
-<!--            enter-from="opacity-0"-->
-<!--            enter-to="opacity-100"-->
-<!--            leave="duration-200 ease-in"-->
-<!--            leave-from="opacity-100"-->
-<!--            leave-to="opacity-0"-->
-<!--        >-->
-<!--          <div class="fixed inset-0 bg-black/25" />-->
-<!--        </TransitionChild>-->
-
-<!--        <div class="fixed inset-0 overflow-y-auto">-->
-<!--          <div-->
-<!--              class="flex min-h-full items-center justify-center p-4 text-center"-->
-<!--          >-->
-<!--            <TransitionChild-->
-<!--                as="template"-->
-<!--                enter="duration-300 ease-out"-->
-<!--                enter-from="opacity-0 scale-95"-->
-<!--                enter-to="opacity-100 scale-100"-->
-<!--                leave="duration-200 ease-in"-->
-<!--                leave-from="opacity-100 scale-100"-->
-<!--                leave-to="opacity-0 scale-95"-->
-<!--            >-->
-<!--              <DialogPanel>-->
-<!--                <DialogTitle>Deactivate account</DialogTitle>-->
-<!--                <DialogDescription>-->
-<!--                  This will permanently deactivate your account-->
-<!--                </DialogDescription>-->
-
-<!--                <p>-->
-<!--                  Are you sure you want to deactivate your account? All of your data will be-->
-<!--                  permanently removed. This action cannot be undone.-->
-<!--                </p>-->
-
-<!--                <button @click="">Deactivate</button>-->
-<!--                <button @click="">Cancel</button>-->
-<!--              </DialogPanel>-->
-<!--            </TransitionChild>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </Dialog>-->
-<!--    </TransitionRoot>-->
+    <TransitionRoot :show="popoverOpened" as="div">
+      <TransitionChild
+        as="div"
+        enter="duration-300 ease-out"
+        enter-from="opacity-0"
+        enter-to="opacity-100"
+        leave="duration-200 ease-in"
+        leave-from="opacity-100"
+        leave-to="opacity-0"
+      >
+        <div class="absolute inset-0 bg-black/25 z-2 min-h-[100%]" />
+      </TransitionChild>
+      <div class='absolute left-0 bottom-0 z-3'>
+        <TransitionChild
+          appear
+          as='div'
+          enter="transition-all duration-300"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="transition-all duration-350"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class='bg-white h-54 w-full rounded-t-md'>
+            <h2 class="w-full h-20 border-b-2 border-b-gray-100 border-solid p-4 text-blue-700 font-semibold">Вы изменили номенклатуру. Выберите действие</h2>
+            <div class="flex flex-col gap-4 items-start p-4">
+              <button @click="update">Сохранить с новыми значениями</button>
+              <button @click="handleNomenclatureType('create'); popoverOpened = false; onSubmit()">Создать новую</button>
+              <button @click="popoverOpened = false">Назад</button>
+            </div>
+          </div>
+        </TransitionChild>
+      </div>
+    </TransitionRoot>
   </div>
 </template>

@@ -6,9 +6,11 @@ import { spread } from 'patronum';
 import { myRequestsQuery } from '@/entities/requests';
 
 type TFormMode = 'selectType' | 'form';
+type TNomenclatureType = 'update' | 'create';
 type TAdvertisementType = 'buy' | 'sell';
 
 export interface FormValues {
+  id?: number;
   name: string;
   article: string;
   count: string;
@@ -73,21 +75,40 @@ export const getNames = createQuery({
 
 export const createNomenclature =  createMutation({
   handler: async (data: FormValues) =>
-      $api.nomenclatures.createNomenclature(
-          Object.assign(
-              {
-                  name: data.name,
-                  article: data.article,
-                  destination: data.destination
-              },
-          ),
+    $api.nomenclatures.createNomenclature(
+      Object.assign(
+        {
+          name: data.name,
+          article: data.article,
+          destination: data.destination
+        },
       ),
+    ),
 })
+
+export const updateNomenclature =  createMutation({
+  handler: async (data: FormValues) =>
+    $api.nomenclatures.updateNomenclature(
+      data.id ?? 1,
+      Object.assign(
+        {
+          name: data.name,
+          article: data.article,
+          destination: data.destination
+        },
+      ),
+    ),
+})
+
 
 export const advertisementTypeSelected = createEvent<TAdvertisementType>();
 export const formClosed = createEvent();
 export const formSubmitted = createEvent<FormValues>();
 export const createAdvertisementMounted = createEvent();
+export const nomenclatureTypeSelected = createEvent<TNomenclatureType>();
+
+export const $nomenclatureType = createStore<TNomenclatureType>('create')
+  .reset([formClosed])
 
 export const $advertisementType = createStore<TAdvertisementType | null>(
   null,
@@ -97,8 +118,39 @@ export const $formMode = createStore<TFormMode>('selectType').reset([
 ]);
 
 sample({
-    clock: formSubmitted,
-    target: createNomenclature.start,
+  clock: nomenclatureTypeSelected,
+  source: $nomenclatureType,
+  fn: (type) => ({
+    $nomenclatureType: type
+  })
+})
+
+sample({
+  clock: formSubmitted,
+  source: $nomenclatureType,
+  filter: (src) => src === 'create',
+  fn: (_, clk) => ({
+    name: clk.name,
+    article: clk.article,
+    destination: clk.destination,
+    count: clk.count,
+  }),
+  target: createNomenclature.start,
+});
+
+sample({
+  clock: formSubmitted,
+  source: $nomenclatureType,
+  filter: (src) => src === 'update',
+  fn: (_, clk) => (
+  {
+    id: clk.id,
+    name: clk.name,
+    article: clk.article,
+    destination: clk.destination,
+    count: clk.count,
+  }),
+  target: updateNomenclature.start,
 });
 
 sample({
