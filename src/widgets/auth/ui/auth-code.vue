@@ -9,28 +9,18 @@
     Input,
   } from '@/shared/ui';
   import { usePhoneOrEmailForm } from '@/widgets/auth/lib/auth-schema';
+  import { handleNextForm } from '@/widgets/auth/lib/form-mode';
   import {
-    $inputMode,
     authFormSubmitted,
-    loginUser,
+    authUser,
     valueInputed,
   } from '@/widgets/auth/model/auth-model';
+  import VerifyCaptcha from '@/widgets/auth/ui/verify-captcha.vue';
   import { useUnit } from 'effector-vue/composition';
   import { ref } from 'vue';
-  import VerifyCaptcha from '@/widgets/auth/ui/verify-captcha.vue';
-  import { type AxiosResponse } from 'axios';
-  import { handleNextForm } from '@/widgets/auth/lib/form-mode';
-
-  interface CustomAxiosResponse<T = any> extends AxiosResponse<T> {
-    response?: {
-      status?: number;
-      data?: any;
-    };
-  }
 
   const nextModal = useUnit(handleNextForm);
   const handleInput = useUnit(valueInputed);
-  const inputMode = useUnit($inputMode);
   const loginError = ref(false);
   const showCaptcha = ref(false);
 
@@ -61,27 +51,12 @@
     }
   };
 
-  const onRegister = () => {
-    form.validate();
-    if (Object.keys(form.errors.value).length <= 0) {
-      nextModal(inputMode.value === 'phone' ? 'verification' : 'details');
-
-      const values = {
-        ...form.values,
-        captchaToken: captchaToken.value,
-      };
-
-      authFormSubmitted(values);
-    }
-  };
-
-  loginUser.finished.success.watch(({ result }) => {
-    if (result.data?.access) {
-      localStorage.setItem('token', result.data?.access);
-      emit('onLogin', true);
-    } else if ((result as CustomAxiosResponse).response?.status === 429) {
+  authUser.finished.success.watch(({ result }: any) => {
+    if ([201, 200].includes(result.status)) {
+      nextModal('verification');
+    } else if (result.response?.status === 429) {
       showCaptcha.value = true;
-      loginError.value = true;
+      loginError.value = false;
     } else {
       loginError.value = true;
       showCaptcha.value = false;
@@ -103,17 +78,8 @@
           <FormLabel>Телефон или почта</FormLabel>
           <FormControl>
             <Input
+              autofocus
               autocomplete="tel"
-              v-if="inputMode === 'phone'"
-              v-mask="'+7 (###) ###-##-##'"
-              @update:model-value="(payload) => handleInput(payload.toString())"
-              class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
-              type="text"
-              placeholder="Телефон или почта"
-              v-bind="componentField" />
-            <Input
-              v-else
-              autocomplete="email"
               @update:model-value="(payload) => handleInput(payload.toString())"
               class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
               type="text"
@@ -124,18 +90,6 @@
         </FormItem>
       </FormField>
 
-      <FormField v-slot="{ componentField }" name="password">
-        <FormItem>
-          <FormLabel>Пароль</FormLabel>
-          <FormControl>
-            <Input
-              type="password"
-              placeholder="Ваш пароль"
-              v-bind="componentField" />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      </FormField>
       <VerifyCaptcha
         @captcha-verified="handleCaptchaVerified"
         v-if="showCaptcha" />
@@ -143,12 +97,7 @@
     <div
       class="inset-x-0 bottom-0 flex w-full flex-col gap-y-3 border-t border-[#CCD0D9] bg-white p-4">
       <Button @click="onSubmit" class="w-full text-[17px] font-semibold"
-        >Войти</Button
-      >
-      <Button
-        @click="onRegister"
-        class="bg-whhite w-full border border-[#0017FC] text-[17px] font-semibold text-[#0017FC] hover:bg-white"
-        >Получить пароль</Button
+        >Получить код</Button
       >
     </div>
   </div>

@@ -1,10 +1,11 @@
 <script setup lang="ts">
   import { Button } from '@/shared/ui/button';
 
-  import { onMounted, ref } from 'vue';
-  import type { Item } from '@/shared/api/generated/Api';
   import { OfferList, searchQuery } from '@/entities/offer';
+  import type { Item } from '@/shared/api/generated/Api';
+  import { onMounted, ref } from 'vue';
 
+  import { $filterValues } from '@/features/filter';
   import {
     Pagination,
     PaginationEllipsis,
@@ -13,9 +14,10 @@
     PaginationNext,
     PaginationPrev,
   } from '@/shared/ui/pagination';
-  import { useUnit } from 'effector-vue/composition';
   import { ScrollArea } from '@/shared/ui/scroll-area';
-  import { $filterValues } from '@/features/filter';
+  import { offerAddButtonClicked } from '@/widgets/offers';
+  import { useUnit } from 'effector-vue/composition';
+  import { Plus } from 'lucide-vue-next';
 
   defineProps<{ class: string }>();
 
@@ -23,6 +25,7 @@
   const page = ref(1);
 
   const filterValues = useUnit($filterValues);
+  const handleAddOffer = useUnit(offerAddButtonClicked);
 
   function getAnnouncementText(count: number) {
     if (count === 0 || !count) {
@@ -73,7 +76,7 @@
 </script>
 
 <template>
-  <div class="flex w-full flex-col sm:max-h-[100vh]" >
+  <div class="flex w-full flex-col sm:max-h-[100vh]">
     <div class="w-full min-w-[350px]">
       <div
         class="flex items-center border-b border-r border-[#D0D4DB] bg-white p-4 pr-5">
@@ -92,16 +95,28 @@
           <h3 class="text-[18px] font-semibold">
             {{ getAnnouncementText(data?.data.items_count ?? 0) }}
           </h3>
-          <Button
-            v-if="
-              getAnnouncementText(data?.data.items_count ?? 0) !==
-              'Нет предложений' || filterValues
-            "
-            @click="handleFilterClick"
-            size="icon"
-            variant="ghost">
-            <img src="./assets/filterIcon.svg" alt="filterIcon" />
-          </Button>
+          <div class="flex gap-x-2">
+            <Button
+              v-if="
+                getAnnouncementText(data?.data.items_count ?? 0) !==
+                  'Нет предложений' || filterValues
+              "
+              @click="handleFilterClick"
+              size="icon"
+              variant="ghost">
+              <img src="./assets/filterIcon.svg" alt="filterIcon" />
+            </Button>
+            <Button
+              v-if="
+                getAnnouncementText(data?.data.items_count ?? 0) !==
+                  'Нет предложений' || filterValues
+              "
+              @click="handleAddOffer()"
+              size="icon"
+              variant="ghost">
+              <Plus class="h-7 w-7" color="#0017FC" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

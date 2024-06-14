@@ -1,33 +1,38 @@
 <script setup lang="ts">
-  import { useRoute, useRouter } from 'vue-router';
   import { onMounted, ref, watch } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
 
-  import { ProductCard } from '@/pages/home';
-  import { MyInterests } from '@/pages/interests'
-  import { Header } from '@/widgets/header';
-  import { Filter } from '@/features/filter';
-  import { Auth } from '@/widgets/auth';
-  import { ManuallyAddOffer, Offers } from '@/widgets/offers';
   import { CreateAdvertisement } from '@/features/create-advertisement';
+  import { Filter } from '@/features/filter';
+  import { ProductCard } from '@/pages/home';
   import type { Item } from '@/shared/api/generated/Api';
+  import { Auth, authFormOpened } from '@/widgets/auth';
+  import { Header } from '@/widgets/header';
+  import { ManuallyAddOffer, Offers } from '@/widgets/offers';
   import { Sidebar } from '@/widgets/sidebar';
 
-  import { useUnit } from 'effector-vue/composition';
-  import { $showAddOfferModal } from '@/widgets/offers/model/offers-model';
+  import { $selectedAdvertisement } from '@/entities/advertisement';
+  import { searchQuery } from '@/entities/offer';
   import { RequestHistory, SelectBrand } from '@/pages/my-requests';
   import {
     $requestViewMode,
     requestViewModeChanged,
   } from '@/pages/my-requests/model/my-requests-model';
-  import { searchQuery } from '@/entities/offer';
-  import { $selectedAdvertisement } from '@/entities/advertisement';
+  import {
+    ChangeCompany,
+    changeCompanyVisibleChanged,
+  } from '@/widgets/change-company';
+  import { $showAddOfferModal } from '@/widgets/offers/model/offers-model';
+  import { useUnit } from 'effector-vue/composition';
 
   const route = useRoute();
   const router = useRouter();
 
   const showAddOfferModal = useUnit($showAddOfferModal);
   const requestViewMode = useUnit($requestViewMode);
+  const openAuthForm = useUnit(authFormOpened);
   const selectedAdvertisement = useUnit($selectedAdvertisement);
+  const changeSwitchCompanyVisible = useUnit(changeCompanyVisibleChanged);
 
   const changeRequestViewMode = useUnit(requestViewModeChanged);
 
@@ -74,8 +79,6 @@
   const isFilterCardOpen = ref(false);
   const isCreateAdvertisementOpen = ref(false);
   const isSidebarOpen = ref(false);
-  const isCompanyOpen = ref(false);
-  const isInterestsCardOpen = ref(true);
 
   watch([isProductCardOpen, isFilterCardOpen], () => {
     if (isProductCardOpen.value && isFilterCardOpen.value) {
@@ -127,35 +130,34 @@
     isProductCardOpen.value = false;
   }
 
-  function handleNavigate(destination: string) {
+  function handleNavigate(
+    destination: 'my-requests' | 'my-offers' | 'change-company' | 'add-company',
+  ) {
     if (destination === 'add-company') {
-      isCompanyOpen.value = true;
+      handleAddCompany();
     } else if (destination === 'my-requests') {
       router.push('/');
-      isSidebarOpen.value = false;
+    } else if (destination === 'change-company') {
+      changeSwitchCompanyVisible(true);
     } else {
       router.push('/');
-      isSidebarOpen.value = false;
     }
+    isSidebarOpen.value = false;
   }
 
   function handleCloseOffers() {
     changeRequestViewMode(null);
   }
-  function handleOpenFilter() {
-    isInterestsCardOpen.value = false;
-    isFilterCardOpen.value = true;
-  }
-  function handleCloseFilter() {
-    isInterestsCardOpen.value = true;
-    isFilterCardOpen.value = false;
+
+  function handleAddCompany() {
+    isAuthOpen.value = true;
+    openAuthForm('company');
   }
 </script>
 
 <template>
   <div class="flex flex-row bg-white">
-    <div
-      class="flex max-h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
+    <div class="flex h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
       <Header
         v-if="
           isMobile &&
@@ -198,7 +200,7 @@
             !isSidebarOpen
           "
           @offer-clicked="handleItemClick"
-          @open-filter="handleOpenFilter()"
+          @open-filter="isFilterCardOpen = true"
           @page-selected="handlePageSelected"
           class="flex w-full" />
       </div>
@@ -222,9 +224,10 @@
       <Auth v-if="isAuthOpen" @submit-close-auth="isAuthOpen = false" />
 
       <Sidebar
-        v-if="isSidebarOpen && !isCompanyOpen"
+        v-if="isSidebarOpen && !isAuthOpen"
         @close-sidebar="isSidebarOpen = false"
         @navigate="handleNavigate" />
+      <ChangeCompany />
       <CreateAdvertisement
         v-if="isCreateAdvertisementOpen"
         @close="isCreateAdvertisementOpen = false" />
@@ -243,7 +246,7 @@
             !isProductCardOpen
           "
           @offer-clicked="handleItemClick"
-          @open-filter="handleOpenFilter()"
+          @open-filter="isFilterCardOpen = true"
           @page-selected="handlePageSelected"
           class="hidden w-full sm:flex lg:hidden" />
       </div>
@@ -253,7 +256,7 @@
           @close-offers="handleCloseOffers"
           v-if="requestViewMode === 'offers'"
           @offer-clicked="handleItemClick"
-          @open-filter="handleOpenFilter()"
+          @open-filter="isFilterCardOpen = true"
           @page-selected="handlePageSelected"
           class="hidden w-full sm:flex lg:hidden" />
       </div>
@@ -280,7 +283,7 @@
       <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
-      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddOfferModal && !isInterestsCardOpen"
+      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddOfferModal"
       class="hidden h-screen w-full min-w-[360px] flex-col justify-between border-l border-[#D0D4DB] bg-[#F9FAFB] sm:w-[360px] lg:flex"></div>
     <ProductCard
       v-if="productItem && !isMobile && !showAddOfferModal"
@@ -293,17 +296,12 @@
     <Filter
       v-if="!isMobile && !showAddOfferModal"
       :is-filter-card-open="isFilterCardOpen"
-      @close-filter-card="handleCloseFilter"
+      @close-filter-card="isFilterCardOpen = false"
       class="inline-block w-full sm:hidden lg:flex" />
-    <MyInterests
-        v-if="!isMobile && !showAddOfferModal"
-        :is-interests-card-open="isInterestsCardOpen"
-        @close-interests-card="isInterestsCardOpen = false"
-        class="flex w-full sm:hidden lg:flex" />
   </div>
   <Filter
     v-if="isMobile"
     :is-filter-card-open="isFilterCardOpen"
-    @close-filter-card="handleCloseFilter"
+    @close-filter-card="isFilterCardOpen = false"
     class="flex w-full sm:hidden lg:inline-block" />
 </template>

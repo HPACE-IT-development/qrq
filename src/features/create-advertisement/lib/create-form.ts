@@ -22,7 +22,8 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
           required_error: 'Введите количество',
           invalid_type_error: 'Введите количество',
         })
-        .min(1, 'Введите количество'),
+        .min(1, 'Введите количество')
+        .optional(),
       // category: z.number({ required_error: 'Выберите категорию' }),
       destination: z.number().optional(),
     }),
@@ -39,7 +40,8 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
             required_error: 'Введите количество',
             invalid_type_error: 'Введите количество',
         })
-        .min(1, 'Введите количество'),
+        .min(1, 'Введите количество')
+        .optional(),
       // category: z.number({ required_error: 'Выберите категорию' }),
       destination: z.number().optional(),
       // price: z.number({ required_error: 'Введите цену' }),

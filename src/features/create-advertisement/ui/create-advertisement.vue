@@ -19,11 +19,11 @@
     createAdvertisementMounted,
     formClosed,
     formSubmitted,
-    getArticles,
     getDestinations,
-    getNames,
-    getNomenclatures,
-    $nomenclatureType, nomenclatureTypeSelected,
+    nomenclatureTypeSelected,
+    $nomenclatureStore,
+    names,
+    articles
   } from '../model/create-advertisement';
   import {
     Listbox,
@@ -39,8 +39,14 @@
 
 
   const emit = defineEmits(['close']);
-  const { advertisementTypeSelected: handleSelectedType, $formMode: formMode, nomenclatureTypeSelected: handleNomenclatureType } =
+  const {
+    advertisementTypeSelected: handleSelectedType,
+    $formMode: formMode,
+    nomenclatureTypeSelected: handleNomenclatureType,
+    $nomenclatureStore: nomenclatureStore
+  } =
     useUnit({
+      $nomenclatureStore,
       advertisementTypeSelected,
       nomenclatureTypeSelected,
       $formMode,
@@ -50,12 +56,8 @@
   // const { data: brands } = useUnit(getBrands);
 
   const advertisementType = useUnit($advertisementType);
-  const nomenclatureType = useUnit($nomenclatureType);
 
-  const { data: nomenclatures } = useUnit(getNomenclatures)
   const { data: destinations } = useUnit(getDestinations)
-  const { data: articles } = useUnit(getArticles)
-  const { data: names } = useUnit(getNames)
 
   const { form, article, name, destination } = useCreateAdvertisementForm(
     advertisementType.value,
@@ -66,9 +68,7 @@
 
   const onSubmit = async () => {
     await form.validate();
-    console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
-      emit('close');
       formSubmitted(form.values);
     }
   };
@@ -85,14 +85,30 @@
   }
   const popoverOpened = ref(false);
 
-  watch([() => name.value, () => article.value, () => destination.value], (array) => {
+  const publishRequest = () => {
+    onSubmit()
+    emit('close');
+  }
+
+  watch([() => name.value, () => article.value, () => destination.value], () => {
     if (type.value === 'changed') {
       popoverOpened.value = true
     } else {
-      findedNomenclature.value = nomenclatures.value?.data?.filter((nomenclature) => article.value === nomenclature.article || name.value === nomenclature.name)[0];
-      article.value = findedNomenclature.value?.article
-      name.value = findedNomenclature.value?.name
-      destination.value = findedNomenclature.value?.id
+      nomenclatureStore.value?.map((nomenclature, index) => {
+        if (index % 50 === 0) {
+          // @ts-ignore
+          if (nomenclature.name === name.value || nomenclature.article === article.value) {
+            findedNomenclature.value = nomenclature
+          // @ts-ignore
+            article.value = nomenclature.article
+          // @ts-ignore
+            name.value = nomenclature.name
+          // @ts-ignore
+            destination.value = nomenclature.destinations[0]
+          }
+        }
+      });
+
       if (type.value === 'new') {
         type.value = 'changed'
       } else {
@@ -155,12 +171,16 @@
           <Button
             class="w-full rounded-[10px] text-[16px]"
             @click="handleSelectedType('buy')"
-            >Купить</Button
+          >
+            Купить
+          </Button
           >
           <Button
             class="w-full rounded-[10px] text-[16px]"
             @click="handleSelectedType('sell')"
-            >Продать</Button
+          >
+            Продать
+          </Button
           >
         </div>
       </template>
@@ -234,7 +254,7 @@
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
                 <ListboxOptions
-                  class="absolute z-10 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  class="absolute z-10 w-full max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                   <ListboxOption
                     v-if="destinations?.data"
                     v-for="item in destinations?.data"
@@ -273,11 +293,10 @@
         </form>
       </template>
     </ScrollArea>
-<!--    {{ popoverOpened }}-->
     <div
       v-if="advertisementType"
       class="mt-auto flex w-full items-center justify-center border-t border-[#D0D4DB] p-4">
-      <Button @click="onSubmit" class="w-full rounded-[9px] text-[16px]">
+      <Button @click="publishRequest" class="w-full rounded-[9px] text-[16px]">
         Опубликовать заявку
       </Button>
     </div>

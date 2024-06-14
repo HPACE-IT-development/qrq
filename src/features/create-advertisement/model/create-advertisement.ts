@@ -4,6 +4,7 @@ import { createMutation, createQuery, keepFresh } from '@farfetched/core';
 import { createEvent, createStore, sample } from 'effector';
 import { spread } from 'patronum';
 import { myRequestsQuery } from '@/entities/requests';
+import { ref } from 'vue';
 
 type TFormMode = 'selectType' | 'form';
 type TNomenclatureType = 'update' | 'create';
@@ -46,31 +47,14 @@ export const getBrands = createQuery({
 });
 
 export const getNomenclatures = createQuery({
-  handler: () => $api.nomenclatures.getNomenclatures()
+  handler: () => $api.nomenclatures.getNomenclatures().then((response) => {
+    // @ts-ignore
+    nomenclatureChange(response.data)
+  })
 })
 
 export const getDestinations = createQuery({
     handler: () => $api.destinations.getDestinations()
-})
-
-export const getArticles = createQuery({
-  handler: () => $api.nomenclatures.getNomenclatures()
-    .then((response) => response.data.map((nomenclature) => {
-      return {
-        id: nomenclature.id,
-        name: nomenclature.article
-      }
-    }))
-})
-
-export const getNames = createQuery({
-  handler: () => $api.nomenclatures.getNomenclatures()
-    .then((response) => response.data.map((nomenclature) => {
-      return {
-        id: nomenclature.id,
-        name: nomenclature.name
-      }
-    }))
 })
 
 export const createNomenclature =  createMutation({
@@ -106,6 +90,11 @@ export const formClosed = createEvent();
 export const formSubmitted = createEvent<FormValues>();
 export const createAdvertisementMounted = createEvent();
 export const nomenclatureTypeSelected = createEvent<TNomenclatureType>();
+export const nomenclatureChange = createEvent();
+
+export const $nomenclatureStore = createStore([])
+export const articles = ref([])
+export const names = ref([])
 
 export const $nomenclatureType = createStore<TNomenclatureType>('create')
   .reset([formClosed])
@@ -117,12 +106,35 @@ export const $formMode = createStore<TFormMode>('selectType').reset([
   formClosed,
 ]);
 
+// @ts-ignore
+$nomenclatureStore.on(nomenclatureChange, (state, value: Array) => {
+  // @ts-ignore
+  names.value = value.map((nomenclature: any) => {
+    return {
+      id: nomenclature.id,
+      name: nomenclature.name
+    }
+  });
+  articles.value = value.map((nomenclature: any) => {
+    return {
+      id: nomenclature.id,
+      name: nomenclature.article
+    }
+  });
+  return value;
+})
+
 sample({
   clock: nomenclatureTypeSelected,
   source: $nomenclatureType,
   fn: (type) => ({
     $nomenclatureType: type
   })
+})
+
+sample({
+  clock: $nomenclatureStore,
+  target: nomenclatureChange
 })
 
 sample({
@@ -155,7 +167,7 @@ sample({
 
 sample({
   clock: createAdvertisementMounted,
-  target: [getArticles.start, getNames.start, getNomenclatures.start, getDestinations.start],
+  target: [getNomenclatures.start, getDestinations.start],
 });
 
 sample({
@@ -170,34 +182,34 @@ sample({
   }),
 });
 
-sample({
-  clock: formSubmitted,
-  source: $advertisementType,
-  filter: (src) => src === 'buy',
-  fn: (_, clk) => ({
-    name: clk.name,
-    article: clk.article,
-    amount: parseInt(clk?.count ?? '1'),
-    category: clk.category,
-    brand: clk.brand,
-  }),
-  target: [createBidMutation.start, formClosed],
-});
-
-sample({
-  clock: formSubmitted,
-  source: $advertisementType,
-  filter: (src) => src === 'sell',
-  fn: (_, clk) => ({
-    name: clk.name,
-    amount: parseInt(clk?.count ?? '1'),
-    category: clk.category,
-    brand: clk.brand,
-    price: clk.price!,
-    delivery_time: clk.available,
-  }),
-  target: [createOfferMutation.start, formClosed],
-});
+// sample({
+//   clock: formSubmitted,
+//   source: $advertisementType,
+//   filter: (src) => src === 'buy',
+//   fn: (_, clk) => ({
+//     name: clk.name,
+//     article: clk.article,
+//     amount: parseInt(clk?.count ?? '1'),
+//     category: clk.category,
+//     brand: clk.brand,
+//   }),
+//   target: [createBidMutation.start, formClosed],
+// });
+//
+// sample({
+//   clock: formSubmitted,
+//   source: $advertisementType,
+//   filter: (src) => src === 'sell',
+//   fn: (_, clk) => ({
+//     name: clk.name,
+//     amount: parseInt(clk?.count ?? '1'),
+//     category: clk.category,
+//     brand: clk.brand,
+//     price: clk.price!,
+//     delivery_time: clk.available,
+//   }),
+//   target: [createOfferMutation.start, formClosed],
+// });
 
 keepFresh(myRequestsQuery, {
   triggers: [

@@ -29,12 +29,61 @@ const emit = defineEmits<{
 }>()
 const selected = ref<string>('')
 const query = ref<string>('')
-const filteredOptions = computed(() => query.value === '' ? props.options : props.options?.filter((option) => option.name?.toLowerCase().includes(query.value.toLowerCase())))
-const selectedOption = computed(() => selected.value && filteredOptions.value?.find((option) => option.name === selected.value))
+const loadingFlag = ref<boolean>(true)
 
-watch([() => selectedOption.value, () => props.defaultValue], (array) => {
-  if (array[0] && selectedOption.value) emit('select', selectedOption.value)
+const queryEmpty = computed(() => {
+  return query.value === ''
+})
+
+const loading = computed({
+  get: () => {
+    return loadingFlag.value;
+  },
+  set: (newValue) => {
+    loadingFlag.value = newValue;
+  }
+})
+
+const filteredOptions = ref<IOption[]>([])
+const selectedOption = computed(() => selected.value ? filteredOptions.value?.find((option) => option.name === selected.value) : '')
+
+watch([
+  () => selectedOption.value,
+  () => props.defaultValue,
+  () => query.value,
+  () => props.options
+], (array) => {
+  if (array[0] && selectedOption.value) {
+    loadingFlag.value = false
+    emit('select', selectedOption.value)
+  }
   if (array[1]) selected.value = array[1] ?? ''
+  if (array[2]) {
+    loadingFlag.value = true
+    let timer: any;
+    if (!timer) {
+      timer = setTimeout(() => {
+        if (query.value === '' || props.options?.length === 0) {
+          filteredOptions.value = []
+          clearTimeout(timer)
+        } else {
+          filteredOptions.value = []
+          props.options?.map((option, index) => {
+            if (index % 50 === 0) {
+              if (option.name?.toLowerCase().includes(query.value.toLowerCase())) {
+                filteredOptions.value = [option, ...filteredOptions.value]
+                loadingFlag.value = false;
+              }
+            }
+          })
+          clearTimeout(timer)
+        }
+      }, 1000)
+    }
+  }
+  if (array[3]?.length !== 0) {
+    loadingFlag.value = false
+  }
 })
 
 </script>
@@ -51,24 +100,38 @@ watch([() => selectedOption.value, () => props.defaultValue], (array) => {
       <ComboboxInput
         :model-value="value"
         @change="query = $event.target.value"
-        class='h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3] w-full outline-0'
+        class='h-fit rounded-[8px] max-h-60 border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3] w-full outline-0'
         :placeholder='placeholder'
+        aria-autocomplete='none'
+        autcocomplete='off'
       />
       <transition
         leave-active-class="transition ease-in duration-100"
         leave-from-class="opacity-100"
         leave-to-class="opacity-0">
-        <ComboboxOptions
-          v-if='filteredOptions'
-          class='absolute z-10 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm'
+        <section
+          v-if='!selectedOption && !queryEmpty'
+          class='absolute z-10 w-full overflow-y-auto max-h-60 rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm'
         >
-          <ComboboxOption
-            v-for="item in filteredOptions"
-            :key="item.id"
-            :value="item.name"
-          >
-            <li
-              :class="
+          <article class='flex justify-center items-center h-10' v-if='loading'>
+            <div
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current text-blue-700 border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+              role="status">
+              <span
+                class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+              >
+                Loading...
+              </span>
+            </div>
+          </article>
+          <ComboboxOptions v-if='!loading'>
+            <ComboboxOption
+              v-for="item in filteredOptions"
+              :key="item.id"
+              :value="item.name"
+            >
+              <li
+                :class="
                 cn(
                   'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
                   query === item.name &&
@@ -78,9 +141,10 @@ watch([() => selectedOption.value, () => props.defaultValue], (array) => {
               <span class="block truncate font-normal">
                 {{ item.name }}
               </span>
-            </li>
-          </ComboboxOption>
-        </ComboboxOptions>
+              </li>
+            </ComboboxOption>
+          </ComboboxOptions>
+        </section>
       </transition>
     </Combobox>
   </div>
