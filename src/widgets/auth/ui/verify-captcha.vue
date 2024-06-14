@@ -7,7 +7,7 @@
     }
   }
 
-  const siteKey = ref<string>('6LeKHdMpAAAAAAbIOl0SFGZzvsCc3dzik4IKkZyI');
+  const siteKey = ref<string>('6LdR5fgpAAAAAFz5N0l6Ce7EoUwTqIPmVwvCyAzz');
   const recaptchaContainer = ref<HTMLDivElement | null>(null);
 
   const emit = defineEmits(['captcha-verified']);
