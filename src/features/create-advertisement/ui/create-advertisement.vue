@@ -127,7 +127,6 @@
     () => destination.value
   ], (array) => {
     if (type.value === 'find') {
-      console.log(destination.value);
       if (countOfChanges.value <= 0) {
         nomenclatureStore.value?.map((nomenclature, index) => {
           if (index % 50 === 0) {
@@ -171,9 +170,6 @@
         handleClose();
       }
     })
-    article.value = ''
-    name.value = ''
-    destination.value = 0
   });
 </script>
 

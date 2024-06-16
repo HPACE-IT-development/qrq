@@ -191,7 +191,7 @@ sample({
     name: clk.name,
     article: clk.article,
     amount: parseInt(clk?.count ?? '1'),
-    destinations: [ clk.destinations ]
+    destinations: [ clk.destinations ?? clk.destination ]
   }),
   target: [createBidMutation.start, formClosed],
 });
