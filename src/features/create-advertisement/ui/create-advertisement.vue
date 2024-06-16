@@ -23,7 +23,7 @@
     nomenclatureTypeSelected,
     $nomenclatureStore,
     names,
-    articles
+    articles, $nomenclatureType,
   } from '../model/create-advertisement';
   import {
     Listbox,
@@ -42,11 +42,13 @@
   const {
     advertisementTypeSelected: handleSelectedType,
     $formMode: formMode,
+    $nomenclatureType: nomenclatureType,
     nomenclatureTypeSelected: handleNomenclatureType,
     $nomenclatureStore: nomenclatureStore
   } =
     useUnit({
       $nomenclatureStore,
+      $nomenclatureType,
       advertisementTypeSelected,
       nomenclatureTypeSelected,
       $formMode,
@@ -65,18 +67,33 @@
 
   const findedNomenclature = ref();
   const type = ref("");
+  const countOfChanges = ref(0);
 
   const onSubmit = async () => {
     await form.validate();
+    console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       formSubmitted(form.values);
     }
   };
 
-  const update = async () => {
+  const updateNomenclature = () => {
     handleNomenclatureType('update')
+    // @ts-ignore
+    formSubmitted({
+      name: name.value,
+      article: article.value,
+      destinations: [destination.value]
+    })
+    popoverOpened.value = false;
+    onSubmit()
+  }
+
+  const createNomenclature = () => {
+    handleNomenclatureType('create');
     formSubmitted(findedNomenclature.value)
     popoverOpened.value = false;
+    onSubmit()
   }
 
   function handleClose() {
@@ -86,36 +103,56 @@
   const popoverOpened = ref(false);
 
   const publishRequest = () => {
+    if (type.value === 'create') handleNomenclatureType('create')
     onSubmit()
     emit('close');
   }
 
-  watch([() => name.value, () => article.value, () => destination.value], () => {
-    if (type.value === 'changed') {
-      popoverOpened.value = true
-    } else {
-      nomenclatureStore.value?.map((nomenclature, index) => {
-        if (index % 50 === 0) {
-          // @ts-ignore
-          if (nomenclature.name === name.value || nomenclature.article === article.value) {
-            findedNomenclature.value = nomenclature
-          // @ts-ignore
-            article.value = nomenclature.article
-          // @ts-ignore
-            name.value = nomenclature.name
-          // @ts-ignore
-            destination.value = nomenclature.destinations[0]
-          }
-        }
-      });
+  const selectData = (data: { id: number, name: string } | string, field: string) => {
+    if (typeof data === 'string') {
+      if (field === 'name') name.value = data
+      if (field === 'article') article.value = data
+      type.value = 'create'
+    }
+    else {
+      if (field === 'name') name.value = data.name
+      if (field === 'article') article.value = data.name
+      type.value = 'find'
+    }
+  }
 
-      if (type.value === 'new') {
-        type.value = 'changed'
+  watch([
+    () => name.value,
+    () => article.value,
+    () => destination.value
+  ], (array) => {
+    if (type.value === 'find') {
+      console.log(destination.value);
+      if (countOfChanges.value <= 0) {
+        nomenclatureStore.value?.map((nomenclature, index) => {
+          if (index % 50 === 0) {
+            // @ts-ignore
+            if (nomenclature.name === name.value || nomenclature.article === article.value) {
+              findedNomenclature.value = nomenclature
+              // @ts-ignore
+              article.value = nomenclature.article
+              // @ts-ignore
+              name.value = nomenclature.name
+              // @ts-ignore
+              destination.value = nomenclature.destinations[0]
+            }
+          }
+        })
       } else {
-        type.value = 'new'
-        handleNomenclatureType('create')
-        onSubmit();
+        name.value = array[0]
+        article.value = array[1]
+        destination.value = array[2]
       }
+      if (countOfChanges.value >= 2) popoverOpened.value = true
+      countOfChanges.value++
+    } else if (name.value !== undefined && article.value !== undefined && destination.value !== undefined) {
+      if (type.value === 'create' && countOfChanges.value >= 1) popoverOpened.value = true
+      countOfChanges.value++
     }
   })
 
@@ -128,13 +165,16 @@
     });
   });
 
-  onUnmounted(() =>
+  onUnmounted(() => {
     document.removeEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleClose();
       }
-    }),
-  );
+    })
+    article.value = ''
+    name.value = ''
+    destination.value = 0
+  });
 </script>
 
 <template>
@@ -191,14 +231,14 @@
             :options='names'
             label='Наименование'
 
-            @select='(selectedName: any) => name = selectedName.name'
+            @select="(selectedName: any) => selectData(selectedName, 'name')"
           />
           <suggestion-input
             :default-value='article'
             :options='articles'
             label='Артикул'
 
-            @select='(selectedArticle: any) => article = selectedArticle.name'
+            @select="(selectedArticle: any) => selectData(selectedArticle, 'article')"
           />
 <!--          <FormField v-slot="{ componentField }" name="article">-->
 <!--            <FormItem>-->
@@ -326,8 +366,8 @@
           <div class='bg-white h-54 w-full rounded-t-md'>
             <h2 class="w-full h-20 border-b-2 border-b-gray-100 border-solid p-4 text-blue-700 font-semibold">Вы изменили номенклатуру. Выберите действие</h2>
             <div class="flex flex-col gap-4 items-start p-4">
-              <button @click="update">Сохранить с новыми значениями</button>
-              <button @click="handleNomenclatureType('create'); popoverOpened = false; onSubmit()">Создать новую</button>
+              <button @click="updateNomenclature">Сохранить с новыми значениями</button>
+              <button @click="createNomenclature">Создать новую</button>
               <button @click="popoverOpened = false">Назад</button>
             </div>
           </div>

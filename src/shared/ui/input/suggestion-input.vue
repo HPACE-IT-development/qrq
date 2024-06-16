@@ -25,7 +25,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  select: [value: IOption]
+  select: [value: IOption | string]
 }>()
 const selected = ref<string>('')
 const query = ref<string>('')
@@ -44,8 +44,21 @@ const loading = computed({
   }
 })
 
+const queryPerson = computed(() => {
+  return query.value === '' ? null : query.value
+})
+
 const filteredOptions = ref<IOption[]>([])
-const selectedOption = computed(() => selected.value ? filteredOptions.value?.find((option) => option.name === selected.value) : '')
+const selectedOption = computed(() => {
+  if (selected.value) {
+    const findedValue = filteredOptions.value?.find((option) => option.name === selected.value)
+    if (!findedValue) {
+      return query.value
+    } else {
+      return findedValue;
+    }
+  }
+})
 
 watch([
   () => selectedOption.value,
@@ -125,6 +138,18 @@ watch([
             </div>
           </article>
           <ComboboxOptions v-if='!loading'>
+            <ComboboxOption v-if="queryPerson" :value="queryPerson">
+              <li
+                :class="
+                cn(
+                  'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
+                )
+              ">
+              <span class="block truncate font-normal">
+                {{ query }}
+              </span>
+              </li>
+            </ComboboxOption>
             <ComboboxOption
               v-for="item in filteredOptions"
               :key="item.id"

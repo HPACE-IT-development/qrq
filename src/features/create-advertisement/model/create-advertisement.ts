@@ -5,9 +5,10 @@ import { createEvent, createStore, sample } from 'effector';
 import { spread } from 'patronum';
 import { myRequestsQuery } from '@/entities/requests';
 import { ref } from 'vue';
+import { data } from 'autoprefixer';
 
 type TFormMode = 'selectType' | 'form';
-type TNomenclatureType = 'update' | 'create';
+type TNomenclatureType = 'update' | 'create' | 'default';
 type TAdvertisementType = 'buy' | 'sell';
 
 export interface FormValues {
@@ -19,6 +20,7 @@ export interface FormValues {
   brand?: number;
   price?: number;
   available?: number;
+  destinations?: Array<number>;
   destination?: number;
 }
 
@@ -32,9 +34,8 @@ const createBidMutation = createMutation({
       name: data.name,
       article: data.article || 'Не указано',
       amount: data.amount,
-      category: data.category,
-      brand: data.brand,
-      status: 0,
+      destinations: data.destinations,
+      status: 0
     }),
 });
 
@@ -64,7 +65,7 @@ export const createNomenclature =  createMutation({
         {
           name: data.name,
           article: data.article,
-          destination: data.destination
+          destinations: data.destinations
         },
       ),
     ),
@@ -78,7 +79,7 @@ export const updateNomenclature =  createMutation({
         {
           name: data.name,
           article: data.article,
-          destination: data.destination
+          destinations: data.destinations
         },
       ),
     ),
@@ -96,8 +97,8 @@ export const $nomenclatureStore = createStore([])
 export const articles = ref([])
 export const names = ref([])
 
-export const $nomenclatureType = createStore<TNomenclatureType>('create')
-  .reset([formClosed])
+export const $nomenclatureType = createStore<TNomenclatureType>('default')
+  .reset([formClosed]);
 
 export const $advertisementType = createStore<TAdvertisementType | null>(
   null,
@@ -126,10 +127,10 @@ $nomenclatureStore.on(nomenclatureChange, (state, value: Array) => {
 
 sample({
   clock: nomenclatureTypeSelected,
-  source: $nomenclatureType,
   fn: (type) => ({
-    $nomenclatureType: type
-  })
+    $nomenclatureType: type,
+  }),
+  target: spread({ $nomenclatureType })
 })
 
 sample({
@@ -144,7 +145,7 @@ sample({
   fn: (_, clk) => ({
     name: clk.name,
     article: clk.article,
-    destination: clk.destination,
+    destinations: clk.destinations,
     count: clk.count,
   }),
   target: createNomenclature.start,
@@ -159,7 +160,7 @@ sample({
     id: clk.id,
     name: clk.name,
     article: clk.article,
-    destination: clk.destination,
+    destinations: clk.destinations,
     count: clk.count,
   }),
   target: updateNomenclature.start,
@@ -182,34 +183,31 @@ sample({
   }),
 });
 
-// sample({
-//   clock: formSubmitted,
-//   source: $advertisementType,
-//   filter: (src) => src === 'buy',
-//   fn: (_, clk) => ({
-//     name: clk.name,
-//     article: clk.article,
-//     amount: parseInt(clk?.count ?? '1'),
-//     category: clk.category,
-//     brand: clk.brand,
-//   }),
-//   target: [createBidMutation.start, formClosed],
-// });
-//
-// sample({
-//   clock: formSubmitted,
-//   source: $advertisementType,
-//   filter: (src) => src === 'sell',
-//   fn: (_, clk) => ({
-//     name: clk.name,
-//     amount: parseInt(clk?.count ?? '1'),
-//     category: clk.category,
-//     brand: clk.brand,
-//     price: clk.price!,
-//     delivery_time: clk.available,
-//   }),
-//   target: [createOfferMutation.start, formClosed],
-// });
+sample({
+  clock: formSubmitted,
+  source: $advertisementType,
+  filter: (src) => src === 'buy',
+  fn: (_, clk) => ({
+    name: clk.name,
+    article: clk.article,
+    amount: parseInt(clk?.count ?? '1'),
+    destinations: [ clk.destinations ]
+  }),
+  target: [createBidMutation.start, formClosed],
+});
+
+sample({
+  clock: formSubmitted,
+  source: $advertisementType,
+  filter: (src) => src === 'sell',
+  fn: (_, clk) => ({
+    name: clk.name,
+    amount: parseInt(clk?.count ?? '1'),
+    price: clk.price!,
+    delivery_time: clk.available,
+  }),
+  target: [createOfferMutation.start, formClosed],
+});
 
 keepFresh(myRequestsQuery, {
   triggers: [

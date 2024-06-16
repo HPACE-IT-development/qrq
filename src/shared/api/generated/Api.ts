@@ -158,6 +158,7 @@ export interface Bid {
   brand?: number;
   /** destination_id */
   destinations?: number[];
+  destination?: number;
 }
 
 export type Bids = Bid[];
