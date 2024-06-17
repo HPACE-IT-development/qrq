@@ -23,7 +23,7 @@
     nomenclatureTypeSelected,
     $nomenclatureStore,
     names,
-    articles, $nomenclatureType,
+    articles,
   } from '../model/create-advertisement';
   import {
     Listbox,
@@ -42,13 +42,11 @@
   const {
     advertisementTypeSelected: handleSelectedType,
     $formMode: formMode,
-    $nomenclatureType: nomenclatureType,
     nomenclatureTypeSelected: handleNomenclatureType,
     $nomenclatureStore: nomenclatureStore
   } =
     useUnit({
       $nomenclatureStore,
-      $nomenclatureType,
       advertisementTypeSelected,
       nomenclatureTypeSelected,
       $formMode,
@@ -71,7 +69,6 @@
 
   const onSubmit = async () => {
     await form.validate();
-    console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       formSubmitted(form.values);
     }
@@ -126,6 +123,7 @@
     () => article.value,
     () => destination.value
   ], (array) => {
+    console.log(destination);
     if (type.value === 'find') {
       if (countOfChanges.value <= 0) {
         nomenclatureStore.value?.map((nomenclature, index) => {
@@ -138,7 +136,7 @@
               // @ts-ignore
               name.value = nomenclature.name
               // @ts-ignore
-              destination.value = nomenclature.destinations[0]
+              destination.value = Number(nomenclature.destinations[0])
             }
           }
         })
