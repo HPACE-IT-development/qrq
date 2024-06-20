@@ -1340,7 +1340,7 @@ export class Api<
      * @request GET:/nomenclatures/
      * @secure
      */
-    getNomenclatures: (params: RequestParams = {}) =>
+    getNomenclatures: (params?: { query: { search: string } }) =>
       this.request<Nomenclatures, Error>({
         path: `/nomenclatures/`,
         method: 'GET',

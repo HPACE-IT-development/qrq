@@ -15,11 +15,11 @@ const app = createApp(App);
 app.use(router);
 app.use(VueVirtualScroller);
 
-const unlogger = attachLogger();
+// const unlogger = attachLogger();
 
-if (import.meta.env.PROD) {
-  unlogger();
-}
+// if (import.meta.env.PROD) {
+//   unlogger();
+// }
 
 // @ts-expect-error seems like bug in VueTheMask types
 app.use(VueTheMask);

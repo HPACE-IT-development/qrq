@@ -9,21 +9,24 @@
     Input,
   } from '@/shared/ui';
   import { ChevronDown, X } from 'lucide-vue-next';
-  import { useUnit } from 'effector-vue/composition';
+  import { useGate, useStore, useUnit } from 'effector-vue/composition';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
   import { useCreateAdvertisementForm } from '../lib/create-form';
   import {
     $advertisementType,
     $formMode,
     advertisementTypeSelected,
-    createAdvertisementMounted,
-    formClosed,
-    formSubmitted,
-    getDestinations,
-    nomenclatureTypeSelected,
-    $nomenclatureStore,
-    names,
     articles,
+    createAdvertisementMounted,
+    findNomenclatures,
+    formClosed,
+    formSubmitted, getBrands, getCategories,
+    getDestinations,
+    getNomenclatures,
+    names,
+    nomenclatures,
+    nomenclaturesGate,
+    nomenclatureTypeSelected,
   } from '../model/create-advertisement';
   import {
     Listbox,
@@ -37,60 +40,67 @@
   import { ScrollArea } from '@/shared/ui/scroll-area';
   import SuggestionInput from '@/shared/ui/input/suggestion-input.vue';
 
-
   const emit = defineEmits(['close']);
   const {
     advertisementTypeSelected: handleSelectedType,
     $formMode: formMode,
     nomenclatureTypeSelected: handleNomenclatureType,
-    $nomenclatureStore: nomenclatureStore
+    findNomenclatures: handleFindNomenclatures
   } =
     useUnit({
-      $nomenclatureStore,
       advertisementTypeSelected,
       nomenclatureTypeSelected,
       $formMode,
+      findNomenclatures,
     });
 
-  // const { data: categories } = useUnit(getCategories);
-  // const { data: brands } = useUnit(getBrands);
-
   const advertisementType = useUnit($advertisementType);
+  const { data: destinationsArray } = useUnit(getDestinations)
+  const { data: categories } = useUnit(getCategories);
+  const { data: brands } = useUnit(getBrands);
 
-  const { data: destinations } = useUnit(getDestinations)
+  useGate(nomenclaturesGate)
+  const loading = useStore(getNomenclatures.$pending)
 
-  const { form, article, name, destination } = useCreateAdvertisementForm(
+  const { form, article, name, destinations, category, brand } = useCreateAdvertisementForm(
     advertisementType.value,
   );
-
-  const findedNomenclature = ref();
-  const type = ref("");
+  const type = ref("find");
   const countOfChanges = ref(0);
 
   const onSubmit = async () => {
     await form.validate();
+    console.log(form.values);
+    console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       formSubmitted(form.values);
     }
   };
 
-  const updateNomenclature = () => {
+  const updateNomenclature = async () => {
     handleNomenclatureType('update')
     // @ts-ignore
     formSubmitted({
       name: name.value,
       article: article.value,
-      destinations: [destination.value]
+      destinations: destinations.value
     })
+
     popoverOpened.value = false;
-    onSubmit()
+    handleClose()
   }
 
-  const createNomenclature = () => {
+  const createNomenclature = async () => {
     handleNomenclatureType('create');
-    formSubmitted(findedNomenclature.value)
+    // @ts-ignore
+    formSubmitted({
+      name: name.value,
+      article: article.value,
+      destinations: destinations.value
+    })
+
     popoverOpened.value = false;
-    onSubmit()
+    handleClose()
   }
 
   function handleClose() {
@@ -99,57 +109,68 @@
   }
   const popoverOpened = ref(false);
 
-  const publishRequest = () => {
+  const publishRequest = async () => {
     if (type.value === 'create') handleNomenclatureType('create')
-    onSubmit()
+    await onSubmit()
     emit('close');
   }
 
-  const selectData = (data: { id: number, name: string } | string, field: string) => {
-    if (typeof data === 'string') {
+  const selectData = (data: string, field: string) => {
       if (field === 'name') name.value = data
       if (field === 'article') article.value = data
-      type.value = 'create'
-    }
-    else {
-      if (field === 'name') name.value = data.name
-      if (field === 'article') article.value = data.name
       type.value = 'find'
-    }
+  }
+  const selectedDestinations = ref([])
+
+  const changeDestinations = (value: any) => {
+    selectedDestinations.value = value
+    destinations.value = selectedDestinations.value.map((destination: any) => {
+      return destination.id;
+    })
   }
 
   watch([
     () => name.value,
     () => article.value,
-    () => destination.value
+    () => selectedDestinations.value
   ], (array) => {
-    console.log(destination);
     if (type.value === 'find') {
       if (countOfChanges.value <= 0) {
-        nomenclatureStore.value?.map((nomenclature, index) => {
-          if (index % 50 === 0) {
-            // @ts-ignore
-            if (nomenclature.name === name.value || nomenclature.article === article.value) {
-              findedNomenclature.value = nomenclature
+        let foundedNomenclatures = [];
+          // @ts-ignore
+        handleFindNomenclatures(name.value ?? article.value)
+        foundedNomenclatures = nomenclatures.value[0];
+
+        if (foundedNomenclatures.length !== 0) {
+          type.value = 'find'
+          article.value = foundedNomenclatures.article
+          name.value = foundedNomenclatures.name
+
+          if (foundedNomenclatures?.destinations.length !== 0 && selectedDestinations.value?.length === 0) {
+            for (let destination of foundedNomenclatures?.destinations) {
               // @ts-ignore
-              article.value = nomenclature.article
-              // @ts-ignore
-              name.value = nomenclature.name
-              // @ts-ignore
-              destination.value = Number(nomenclature.destinations[0])
+              selectedDestinations.value.push(destinationsArray.value?.data.find((item) => destination === item.id))
             }
+            destinations.value = selectedDestinations.value.map((destination: any) => {
+              return destination.id;
+            })
           }
-        })
-      } else {
-        name.value = array[0]
-        article.value = array[1]
-        destination.value = array[2]
+        } else {
+          type.value = 'create'
+        }
+
+        setTimeout(() => {
+          if (
+            name.value !== undefined &&
+            article.value !== undefined &&
+            destinations.value !== undefined &&
+            type.value !== 'create'
+          ) {
+            countOfChanges.value++
+          }
+        }, 100)
       }
-      if (countOfChanges.value >= 2) popoverOpened.value = true
-      countOfChanges.value++
-    } else if (name.value !== undefined && article.value !== undefined && destination.value !== undefined) {
-      if (type.value === 'create' && countOfChanges.value >= 1) popoverOpened.value = true
-      countOfChanges.value++
+      if (countOfChanges.value >= 2 && type.value !== 'create') popoverOpened.value = true
     }
   })
 
@@ -169,6 +190,7 @@
       }
     })
   });
+
 </script>
 
 <template>
@@ -221,32 +243,23 @@
       <template v-else>
         <form @submit="onSubmit" class="my-5 flex w-full flex-col gap-y-4 px-5">
           <suggestion-input
-            :default-value='name'
+            v-model='name'
             :options='names'
             label='Наименование'
+            :loading='loading'
 
+            @find='value => handleFindNomenclatures(value)'
             @select="(selectedName: any) => selectData(selectedName, 'name')"
           />
           <suggestion-input
-            :default-value='article'
+            v-model='article'
             :options='articles'
             label='Артикул'
+            :loading='loading'
 
+            @find='value => handleFindNomenclatures(value)'
             @select="(selectedArticle: any) => selectData(selectedArticle, 'article')"
           />
-<!--          <FormField v-slot="{ componentField }" name="article">-->
-<!--            <FormItem>-->
-<!--              <FormLabel>Артикул</FormLabel>-->
-<!--              <FormControl>-->
-<!--                <Input-->
-<!--                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"-->
-<!--                  type="text"-->
-<!--                  placeholder="Артикул"-->
-<!--                  v-bind="componentField" />-->
-<!--              </FormControl>-->
-<!--              <FormMessage />-->
-<!--            </FormItem>-->
-<!--          </FormField>-->
           <FormField v-slot="{ componentField }" name="count">
             <FormItem>
               <FormLabel class='pb-2 text-[14px] font-semibold text-[#101828]'>Количество</FormLabel>
@@ -261,8 +274,46 @@
               <FormMessage />
             </FormItem>
           </FormField>
+          <FormField
+            v-slot="{ componentField }"
+            name="price"
+            v-if="advertisementType === 'sell'"
+          >
+            <FormItem>
+              <FormLabel class='pb-2 text-[14px] font-semibold text-[#101828]'>Цена</FormLabel>
+              <FormControl>
+                <Input
+                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
+                  type="number"
+                  placeholder="Цена"
+                  v-bind="componentField" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField
+            v-if="advertisementType === 'sell'"
+            v-slot="{ componentField }"
+            name="delivery_time"
+          >
+            <FormItem>
+              <FormLabel class='pb-2 text-[14px] font-semibold text-[#101828]'>Срок до клиента</FormLabel>
+              <FormControl>
+                <Input
+                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
+                  type="number"
+                  placeholder="Срок до клиента"
+                  v-bind="componentField" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
           <div class="relative inline-block text-left">
-            <Listbox v-model="destination">
+            <Listbox
+              :model-value="selectedDestinations"
+              multiple
+              @update:model-value='changeDestinations'
+            >
               <p class="pb-2 text-[14px] font-semibold text-[#101828]">
                 Назначение
               </p>
@@ -272,13 +323,10 @@
                   :class="
                     cn(
                       'text-[16px] font-normal tracking-wide text-[#858FA3]',
-                      destinations && 'text-black',
+                      selectedDestinations.length && 'text-black',
                     )
                   ">
-                  {{
-                    destinations?.data?.find((data) => data.id === destination)?.name
-                    ?? 'Назначение'
-                  }}
+                  {{ selectedDestinations?.length > 0 ? selectedDestinations?.map((destination: any) => destination.name).join(', ') : 'Назначение' }}
                 </p>
                 <ChevronDown color="#858FA3" class="h-5 w-5" />
               </ListboxButton>
@@ -290,14 +338,65 @@
                 <ListboxOptions
                   class="absolute z-10 w-full max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                   <ListboxOption
-                    v-if="destinations?.data"
-                    v-for="item in destinations?.data"
+                    v-if="destinationsArray"
+                    v-for="item in destinationsArray?.data"
+                    :value="item"
+                    v-slot='{ selected }'
+                  >
+                    <li
+                      :class="
+                        cn(
+                          'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
+                          selected &&
+                          'bg-gray-200 text-black',
+                        )
+                      ">
+                      <span class="block truncate font-normal">
+                        {{ item?.name }}
+                      </span>
+                    </li>
+                  </ListboxOption>
+                </ListboxOptions>
+              </transition>
+            </Listbox>
+          </div>
+          <div class="relative inline-block text-left" v-if="advertisementType === 'sell'">
+            <Listbox v-model="category" >
+              <p class="pb-2 text-[14px] font-semibold text-[#101828]">
+                Категория
+              </p>
+              <ListboxButton
+                class="inline-flex w-full justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
+                <p
+                  :class="
+                    cn(
+                      'text-[16px] font-normal tracking-wide text-[#858FA3]',
+                      category && 'text-black',
+                    )
+                  ">
+                  {{
+                    categories?.data?.find((value) => value.id === category)
+                      ?.name ?? 'Категория'
+                  }}
+                </p>
+                <ChevronDown color="#858FA3" class="h-5 w-5" />
+              </ListboxButton>
+
+              <transition
+                leave-active-class="transition ease-in duration-100"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0">
+                <ListboxOptions
+                  class="absolute z-10 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  <ListboxOption
+                    v-if="categories?.data"
+                    v-for="item in categories?.data"
                     :value="item.id">
                     <li
                       :class="
                         cn(
                           'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
-                          destination === item.name &&
+                          category === parseInt(item?.id ?? '0') &&
                             'bg-gray-200 text-black',
                         )
                       ">
@@ -310,20 +409,54 @@
               </transition>
             </Listbox>
           </div>
-<!--          <FormField v-slot="{ componentField }" name="available">-->
-<!--            <FormItem>-->
-<!--              <FormLabel>Срок до клиента</FormLabel>-->
 
-<!--              <FormControl>-->
-<!--                <Input-->
-<!--                  class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"-->
-<!--                  type="number"-->
-<!--                  placeholder="Срок до клиента"-->
-<!--                  v-bind="componentField" />-->
-<!--              </FormControl>-->
-<!--              <FormMessage />-->
-<!--            </FormItem>-->
-<!--          </FormField>-->
+          <div class="relative mb-5 inline-block text-left" v-if="advertisementType === 'sell'">
+            <Listbox v-model="brand">
+              <p class="pb-2 text-[14px] font-semibold text-[#101828]">Бренд</p>
+              <ListboxButton
+                class="inline-flex w-full justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
+                <p
+                  :class="
+                    cn(
+                      'text-[16px] font-normal tracking-wide text-[#858FA3]',
+                      brand && 'text-black',
+                    )
+                  ">
+                  {{
+                    brands?.data?.find((value) => value.id === brand)?.name ??
+                    'Бренд'
+                  }}
+                </p>
+                <ChevronDown color="#858FA3" class="h-5 w-5" />
+              </ListboxButton>
+
+              <transition
+                leave-active-class="transition ease-in duration-100"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0">
+                <ListboxOptions
+                  class="absolute w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  <ListboxOption
+                    v-if="brands?.data"
+                    v-for="item in brands?.data"
+                    :value="item.id">
+                    <li
+                      :class="
+                        cn(
+                          'mx-1 my-1 cursor-pointer select-none rounded py-2 pl-3 pr-9 text-gray-900 hover:bg-opacity-90',
+                          brand === parseInt(item?.id ?? '0') &&
+                            'bg-gray-200 text-black',
+                        )
+                      ">
+                      <span class="block truncate font-normal">
+                        {{ item.name }}
+                      </span>
+                    </li>
+                  </ListboxOption>
+                </ListboxOptions>
+              </transition>
+            </Listbox>
+          </div>
         </form>
       </template>
     </ScrollArea>

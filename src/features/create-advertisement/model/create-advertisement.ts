@@ -5,7 +5,7 @@ import { createEvent, createStore, sample } from 'effector';
 import { spread } from 'patronum';
 import { myRequestsQuery } from '@/entities/requests';
 import { ref } from 'vue';
-import { data } from 'autoprefixer';
+import { createGate } from 'effector-vue/composition';
 
 type TFormMode = 'selectType' | 'form';
 type TNomenclatureType = 'update' | 'create' | 'default';
@@ -19,9 +19,8 @@ export interface FormValues {
   category?: number;
   brand?: number;
   price?: number;
-  available?: number;
+  delivery_time?: number;
   destinations?: Array<number>;
-  destination?: number;
 }
 
 const createOfferMutation = createMutation({
@@ -39,24 +38,35 @@ const createBidMutation = createMutation({
     }),
 });
 
-export const getCategories = createQuery({
-  handler: () => $api.categories.getCategories(),
-});
-
-export const getBrands = createQuery({
-  handler: () => $api.brands.getBrands(),
-});
-
 export const getNomenclatures = createQuery({
-  handler: () => $api.nomenclatures.getNomenclatures().then((response) => {
-    // @ts-ignore
-    nomenclatureChange(response.data)
+  handler: async (search) => await $api.nomenclatures.getNomenclatures({ query: search }).then((response) => {
+      nomenclatures.value = response.data;
+
+    names.value = response.data.map((nomenclature) => {
+      return {
+        id: nomenclature.id,
+        name: nomenclature.name
+      }
+    })
+
+    articles.value = response.data.map((nomenclature) => {
+      return {
+        id: nomenclature.id,
+        name: nomenclature.article
+      }
+    })
   })
 })
 
 export const getDestinations = createQuery({
     handler: () => $api.destinations.getDestinations()
 })
+export const getCategories = createQuery({
+  handler: () => $api.categories.getCategories(),
+});
+export const getBrands = createQuery({
+  handler: () => $api.brands.getBrands(),
+});
 
 export const createNomenclature =  createMutation({
   handler: async (data: FormValues) =>
@@ -91,11 +101,12 @@ export const formClosed = createEvent();
 export const formSubmitted = createEvent<FormValues>();
 export const createAdvertisementMounted = createEvent();
 export const nomenclatureTypeSelected = createEvent<TNomenclatureType>();
-export const nomenclatureChange = createEvent();
+export const findNomenclatures = createEvent<string>()
+export const nomenclaturesGate = createGate()
 
-export const $nomenclatureStore = createStore([])
-export const articles = ref([])
-export const names = ref([])
+export const names = ref()
+export const articles = ref()
+export const nomenclatures = ref()
 
 export const $nomenclatureType = createStore<TNomenclatureType>('default')
   .reset([formClosed]);
@@ -103,26 +114,22 @@ export const $nomenclatureType = createStore<TNomenclatureType>('default')
 export const $advertisementType = createStore<TAdvertisementType | null>(
   null,
 ).reset([formClosed]);
+
 export const $formMode = createStore<TFormMode>('selectType').reset([
   formClosed,
 ]);
 
-// @ts-ignore
-$nomenclatureStore.on(nomenclatureChange, (state, value: Array) => {
-  // @ts-ignore
-  names.value = value.map((nomenclature: any) => {
-    return {
-      id: nomenclature.id,
-      name: nomenclature.name
-    }
-  });
-  articles.value = value.map((nomenclature: any) => {
-    return {
-      id: nomenclature.id,
-      name: nomenclature.article
-    }
-  });
-  return value;
+sample({
+  clock: findNomenclatures,
+  fn: (search) => ({
+    search
+  }),
+  target: [getNomenclatures.start]
+})
+
+sample({
+  clock: nomenclaturesGate.open,
+  to: getNomenclatures.start
 })
 
 sample({
@@ -131,11 +138,6 @@ sample({
     $nomenclatureType: type,
   }),
   target: spread({ $nomenclatureType })
-})
-
-sample({
-  clock: $nomenclatureStore,
-  target: nomenclatureChange
 })
 
 sample({
@@ -148,7 +150,7 @@ sample({
     destinations: clk.destinations,
     count: clk.count,
   }),
-  target: createNomenclature.start,
+  target: [createNomenclature.start],
 });
 
 sample({
@@ -163,12 +165,12 @@ sample({
     destinations: clk.destinations,
     count: clk.count,
   }),
-  target: updateNomenclature.start,
+  target: [updateNomenclature.start],
 });
 
 sample({
   clock: createAdvertisementMounted,
-  target: [getNomenclatures.start, getDestinations.start],
+  target: [getDestinations.start, getCategories.start, getBrands.start],
 });
 
 sample({
@@ -191,7 +193,7 @@ sample({
     name: clk.name,
     article: clk.article,
     amount: parseInt(clk?.count ?? '1'),
-    destinations: clk.destinations ? clk.destinations : clk.destination
+    destinations: clk.destinations
   }),
   target: [createBidMutation.start, formClosed],
 });
@@ -202,9 +204,12 @@ sample({
   filter: (src) => src === 'sell',
   fn: (_, clk) => ({
     name: clk.name,
+    article: clk.article,
     amount: parseInt(clk?.count ?? '1'),
-    price: clk.price!,
-    delivery_time: clk.available,
+    price: clk.price,
+    delivery_time: clk.delivery_time,
+    category: clk.category ?? '',
+    brand: clk.brand ?? ''
   }),
   target: [createOfferMutation.start, formClosed],
 });

@@ -4,12 +4,12 @@ import { type Ref } from 'vue';
 import * as z from 'zod';
 
 export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
-  form: FormContext<any, {}>;
-  // category: Ref<number | undefined>;
-  // brand: Ref<number | undefined>;
-  article: Ref<string | undefined>;
-  name: Ref<string | undefined>;
-  destination: Ref<number | undefined>;
+  form: FormContext<any, {}>,
+  article: Ref<string | undefined>,
+  name: Ref<string | undefined>,
+  category: Ref<string | number | number[] | undefined>,
+  brand: Ref<string | number | number[] | undefined>,
+  destinations: Ref<number[] | undefined>,
 } {
   const buySchema = toTypedSchema(
     z.object({
@@ -24,8 +24,7 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
         })
         .min(1, 'Введите количество')
         .optional(),
-      // category: z.number({ required_error: 'Выберите категорию' }),
-      destination: z.number().optional(),
+      destinations: z.array(z.number()).optional(),
     }),
   );
 
@@ -42,10 +41,11 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
         })
         .min(1, 'Введите количество')
         .optional(),
-      // category: z.number({ required_error: 'Выберите категорию' }),
-      destination: z.number().optional(),
-      // price: z.number({ required_error: 'Введите цену' }),
-      // available: z.number({ required_error: 'Введите наличие' }),
+      destinations: z.array(z.number()).optional(),
+      price: z.number({ required_error: 'Введите цену' }),
+      delivery_time: z.number({ required_error: 'Введите срок до клиента'}),
+      category: z.number({ required_error: 'Выберите категорию' }),
+      brand: z.number().optional(),
     }),
   );
 
@@ -55,12 +55,16 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
 
   const [article] = form.defineField('article');
   const [name] = form.defineField('name');
-  const [destination] = form.defineField('destination');
+  const [destinations] = form.defineField('destinations');
+  const [category] = form.defineField('category');
+  const [brand] = form.defineField('brand');
 
   return {
     form,
     article,
     name,
-    destination,
+    destinations,
+    category,
+    brand
   };
 }
