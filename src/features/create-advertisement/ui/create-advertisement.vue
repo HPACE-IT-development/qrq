@@ -83,7 +83,8 @@
     formSubmitted({
       name: name.value,
       article: article.value,
-      destinations: destinations.value
+      destinations: destinations.value,
+      ...form.values
     })
 
     popoverOpened.value = false;
@@ -96,7 +97,8 @@
     formSubmitted({
       name: name.value,
       article: article.value,
-      destinations: destinations.value
+      destinations: destinations.value,
+      ...form.values
     })
 
     popoverOpened.value = false;

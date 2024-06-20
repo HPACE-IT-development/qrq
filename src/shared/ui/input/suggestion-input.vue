@@ -66,7 +66,6 @@ watch([
       :name='name'
       v-slot='{ value }'
     >
-      {{ selected }}
       <ComboboxLabel class='pb-2 text-[14px] font-semibold text-[#101828]'>{{ label }}</ComboboxLabel>
       <ComboboxInput
         :model-value='value'
