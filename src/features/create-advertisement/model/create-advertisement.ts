@@ -23,8 +23,8 @@ export interface FormValues {
   destinations?: Array<number>;
 }
 
-const createOfferMutation = createMutation({
-  handler: (data: Offer) => $api.offers.createOffer(data),
+const createAd = createMutation({
+  handler: (data: Offer) => $api.ads.createAd(data),
 });
 
 const createBidMutation = createMutation({
@@ -211,12 +211,12 @@ sample({
     category: clk.category ?? '',
     brand: clk.brand ?? ''
   }),
-  target: [createOfferMutation.start, formClosed],
+  target: [createAd.start, formClosed],
 });
 
 keepFresh(myRequestsQuery, {
   triggers: [
-    createOfferMutation.finished.success,
+    createAd.finished.success,
     createBidMutation.finished.success,
   ],
   automatically: true,
