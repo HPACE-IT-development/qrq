@@ -143,7 +143,7 @@
         handleFindNomenclatures(name.value ?? article.value)
         foundedNomenclatures = nomenclatures.value[0];
 
-        if (foundedNomenclatures.length !== 0) {
+        if (foundedNomenclatures) {
           type.value = 'find'
           article.value = foundedNomenclatures.article
           name.value = foundedNomenclatures.name

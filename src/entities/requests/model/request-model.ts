@@ -11,7 +11,8 @@ export interface IRequestsQueryParams {
 
 export const myRequestsQuery = createQuery({
   handler: async (params?: IRequestsQueryParams) => {
-    const bids = (await $api.bids.getBids()).data;
+    // @ts-ignore
+    const bids = (await $api.bids.getBids()).data?.results;
     const brands = (await $api.brands.getBrands()).data;
     const categories = (await $api.categories.getCategories()).data;
 
