@@ -70,8 +70,6 @@
 
   const onSubmit = async () => {
     await form.validate();
-    console.log(form.values);
-    console.log(form.errors.value);
     if (Object.keys(form.errors.value).length < 1) {
       formSubmitted(form.values);
     }
