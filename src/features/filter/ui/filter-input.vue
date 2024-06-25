@@ -14,6 +14,7 @@
       label?: string;
       placeholder: string;
       number?: boolean;
+      disabled?: boolean;
     }>(),
     { number: false },
   );
@@ -29,6 +30,7 @@
       <FormControl>
         <Input
           :type="number ? 'number' : 'text'"
+          :disabled="disabled"
           :placeholder="placeholder"
           v-bind="componentField" />
       </FormControl>

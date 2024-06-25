@@ -3,7 +3,7 @@ import NProgress from 'nprogress';
 
 const token = localStorage.getItem('token');
 export const $api = new Api({
-  baseURL: 'https://test.qrq.ru/core/api/v1/',
+  baseURL: '/core/api/v1',
   // baseURL: 'https://virtserver.swaggerhub.com/riderufa/qrq_core/1.0.0',
 });
 
@@ -27,7 +27,7 @@ $api.instance.interceptors.response.use(
 );
 
 export const $qwepApi = new Api({
-  baseURL: 'https://test.qrq.ru/qwer/api/v1',
+  baseURL: '/qwep/api/v1',
   // baseURL: 'https://virtserver.swaggerhub.com/riderufa/qrq_core/1.0.0',
 });
 

@@ -44,6 +44,6 @@
       v-if="formMode === 'phoneOrEmail'" />
     <VerificationCode v-else-if="formMode === 'verification'" />
     <CreateCompany v-else-if="formMode === 'company'" />
-    <AuthDetails v-else-if="formMode === 'details'" />
+    <AuthDetails v-else />
   </div>
 </template>

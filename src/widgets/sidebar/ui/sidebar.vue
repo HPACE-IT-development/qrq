@@ -4,7 +4,8 @@
   import myOffersIcon from '@/widgets/sidebar/assets/myOffersIcon.vue';
   import logoutIcon from '@/widgets/sidebar/assets/logoutIcon.vue';
   import { Button } from '@/shared/ui';
-  import { type DefineComponent } from 'vue';
+  import { type DefineComponent, reactive } from 'vue';
+  import MyInterestsIcon from "@/widgets/sidebar/assets/myInterestsIcon.vue";
 
   export interface IButtonMobile {
     label: string;
@@ -12,15 +13,16 @@
     icon: DefineComponent<{}, {}, any> | null;
   }
 
-  const emit = defineEmits<{
-    (e: 'close-sidebar'): void;
-    (
-      e: 'navigate',
-      value: 'my-requests' | 'my-offers' | 'change-company' | 'add-company',
-    ): void;
-  }>();
+  const emit = defineEmits([
+    'close-sidebar',
+    'navigate',
+    'logout',
+    'add-company',
+    'my-requests',
+    'my-interest'
+  ]);
 
-  const sidebarItems: IButtonMobile[] = [
+  const sidebarItems = reactive<IButtonMobile[]>([
     {
       label: 'Мои Покупки',
       icon: myRequestsIcon,
@@ -32,16 +34,21 @@
       action: () => emit('navigate', 'my-offers'),
     },
     {
+      label: 'Мои интересы',
+      icon: MyInterestsIcon,
+      action: () => emit('navigate', 'my-interests'),
+    },
+    {
       label: 'Переключить аккаунт',
       icon: logoutIcon,
-      action: () => emit('navigate', 'change-company'),
+      action: () => emit('navigate', 'logout'),
     },
     {
       label: 'Добавить компанию',
       icon: companyIcon,
       action: () => emit('navigate', 'add-company'),
     },
-  ];
+  ]);
 </script>
 
 <template>
@@ -78,3 +85,5 @@
     </ul>
   </div>
 </template>
+
+<style scoped lang="postcss"></style>

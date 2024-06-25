@@ -37,8 +37,8 @@ sample({
     $filterValues: clk,
     query: {
       page_size: 10,
-      search: src?.article ?? '',
-      brand: src?.brand ?? '',
+      search: src?.article ?? clk.article,
+      brand: src?.brand ?? clk.brands,
       filters: {
         name: clk.denomination,
         article: clk.article,

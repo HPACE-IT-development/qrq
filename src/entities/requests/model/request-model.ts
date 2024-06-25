@@ -1,18 +1,10 @@
 import { createMutation, createQuery } from '@farfetched/core';
 import { $api } from '@/shared/api';
-import type { Bid } from '@/shared/api/generated/Api';
-
-export interface IRequestsQueryParams {
-  search?: string;
-  article?: string;
-  amount?: number;
-  destinations?: number[];
-}
+import type { Bid, FullRequestParams } from '@/shared/api/generated/Api';
 
 export const myRequestsQuery = createQuery({
-  handler: async (params?: IRequestsQueryParams) => {
-    // @ts-ignore
-    const bids = (await $api.bids.getBids()).data?.results;
+  handler: async (params?: FullRequestParams) => {
+    const bids = (await $api.bids.getBids()).data;
     const brands = (await $api.brands.getBrands()).data;
     const categories = (await $api.categories.getCategories()).data;
 
@@ -22,7 +14,7 @@ export const myRequestsQuery = createQuery({
     );
 
     if (params) {
-      const response = await $api.bids.getBids(params);
+      const response = await $api.bids.getBids({ ...params });
       return response.data;
     }
 
@@ -42,11 +34,5 @@ export const deleteRequestMutation = createMutation({
 });
 
 export const editRequestMutation = createMutation({
-  handler: (bid: Bid) =>
-    $api.bids.updateBid(parseInt(bid?.id ?? '0'), {
-      name: bid.name,
-      status: 3,
-      amount: bid.amount,
-      category: bid.category,
-    }),
+  handler: (bid: Bid) => $api.bids.updateBid(parseInt(bid?.id ?? '0'), { name: bid.name, status: 3, amount: bid.amount, category: bid.category})
 });

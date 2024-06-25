@@ -4,12 +4,9 @@ import { type Ref } from 'vue';
 import * as z from 'zod';
 
 export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
-  form: FormContext<any, {}>,
-  article: Ref<string | undefined>,
-  name: Ref<string | undefined>,
-  category: Ref<string | number | number[] | undefined>,
-  brand: Ref<string | number | number[] | undefined>,
-  destinations: Ref<number[] | undefined>,
+  form: FormContext<any, {}>;
+  category: Ref<number | undefined>;
+  brand: Ref<number | undefined>;
 } {
   const buySchema = toTypedSchema(
     z.object({
@@ -22,9 +19,9 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
           required_error: 'Введите количество',
           invalid_type_error: 'Введите количество',
         })
-        .min(1, 'Введите количество')
-        .optional(),
-      destinations: z.array(z.number()).optional(),
+        .min(1, 'Введите количество'),
+      category: z.number({ required_error: 'Выберите категорию' }),
+      brand: z.number().optional(),
     }),
   );
 
@@ -36,16 +33,14 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
       article: z.string().optional(),
       count: z
         .number({
-            required_error: 'Введите количество',
-            invalid_type_error: 'Введите количество',
+          required_error: 'Введите количество',
+          invalid_type_error: 'Введите количество',
         })
-        .min(1, 'Введите количество')
-        .optional(),
-      destinations: z.array(z.number()).optional(),
-      price: z.number({ required_error: 'Введите цену' }),
-      delivery_time: z.number({ required_error: 'Введите срок до клиента'}),
+        .min(1, 'Введите количество'),
       category: z.number({ required_error: 'Выберите категорию' }),
       brand: z.number().optional(),
+      price: z.number({ required_error: 'Введите цену' }),
+      available: z.number({ required_error: 'Введите наличие' }),
     }),
   );
 
@@ -53,18 +48,12 @@ export function useCreateAdvertisementForm(mode: 'sell' | 'buy' | null): {
     validationSchema: mode === 'sell' ? sellSchema : buySchema,
   });
 
-  const [article] = form.defineField('article');
-  const [name] = form.defineField('name');
-  const [destinations] = form.defineField('destinations');
   const [category] = form.defineField('category');
   const [brand] = form.defineField('brand');
 
   return {
     form,
-    article,
-    name,
-    destinations,
     category,
-    brand
+    brand,
   };
 }
