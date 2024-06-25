@@ -27,7 +27,7 @@ $api.instance.interceptors.response.use(
 );
 
 export const $qwepApi = new Api({
-  baseURL: 'https://test.qrq.ru/qwer/api/v1',
+  baseURL: 'https://test.qrq.ru/qwep/api/v1',
   // baseURL: 'https://virtserver.swaggerhub.com/riderufa/qrq_core/1.0.0',
 });
 
