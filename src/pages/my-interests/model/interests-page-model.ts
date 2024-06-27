@@ -4,7 +4,7 @@ import {$qwepApi} from "@/shared/api/api";
 
 export const listInterestsQuery = createQuery({
     handler: async () => {
-        return (await $qwepApi.interests.listInterests()).data;
+        return (await $qwepApi.interests.getInterests()).data;
     },
 });
 

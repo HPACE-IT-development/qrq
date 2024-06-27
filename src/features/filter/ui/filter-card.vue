@@ -1,10 +1,17 @@
 <script lang="ts" setup>
   import { Button } from '@/shared/ui/button';
   import { X } from 'lucide-vue-next';
+  import { defineProps, onMounted, ref, watch } from 'vue';
   import { useFilter } from '../lib/schema';
   import FilterInput from './filter-input.vue';
-  import { defineProps, onMounted, ref, watch } from 'vue';
 
+  import { searchQuery } from '@/entities/offer';
+  import {
+    $filterValues,
+    filterSubmitted,
+  } from '@/features/filter/model/filter-model';
+  import SelectAll from '@/features/filter/ui/select-all.vue';
+  import { ScrollArea } from '@/shared/ui/scroll-area';
   import {
     Listbox,
     ListboxButton,
@@ -12,42 +19,24 @@
     ListboxOptions,
   } from '@headlessui/vue';
   import { useUnit } from 'effector-vue/composition';
-  import { searchQuery } from '@/entities/offer';
-  import SelectAll from '@/features/filter/ui/select-all.vue';
-  import { ScrollArea } from '@/shared/ui/scroll-area';
-  import {
-    $filterValues,
-    filterSubmitted,
-  } from '@/features/filter/model/filter-model';
-  import {createInterestQuery, listInterestsQuery} from "@/pages/my-interests/model/interests-page-model";
-  import {useRoute} from "vue-router";
-  import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
-
-  const route = useRoute();
 
   defineProps<{
     isFilterCardOpen: boolean;
-    filterInterests: boolean;
-    isFilterByVendor: boolean;
   }>();
 
   const selectedVendors = ref<string[]>([]);
   const selectedBrands = ref<string[]>([]);
 
   const handleFilterSubmit = useUnit(filterSubmitted);
-  const selectedVendor = useUnit($selectedVendor);
 
   const selectedCities = ref<number[]>([]);
-  const showAll = ref<boolean>(false);
 
   const { data, pending } = useUnit(searchQuery);
   const filterValues = useUnit($filterValues);
-  const { start: startAddInterest } = useUnit(createInterestQuery);
-  const {start: getInterests, data: interestsList} = useUnit(listInterestsQuery);
 
   const { form } = useFilter(data?.value?.data.filters as any);
 
-  const emit = defineEmits(['close-filter-card', 'close-filter-card-after-add-interest', 'close-filter-by-interests']);
+  const emit = defineEmits(['close-filter-card']);
 
   const onSubmit = async (event: Event) => {
     event.preventDefault();
@@ -65,76 +54,6 @@
     }
   };
 
-  const addInterests = async (event: Event) => {
-    event.preventDefault();
-    await form.validate();
-    let type = route.path === '/' ? 'Заявки' : 'Объявление';
-    if (Object.keys(form.errors.value).length === 0) {
-      const values = form.values;
-      let vendors = [],
-          related_user = '';
-      if (values?.vendor) {
-        vendors = [values.vendor];
-        related_user = selectedVendor.value.id;
-      } else {
-        let vendors = selectedVendors.value;
-      }
-      const brands = selectedBrands.value;
-      const cityIds = selectedCities.value.map((city) => city.id as number);
-
-      startAddInterest({
-        related_user: related_user,
-        vendor: vendors[0],
-        brand: brands[0],
-        city: cityIds[0],
-        amount: [values.priceFrom, values.priceTo],
-        delivery_time: [values.countFrom, values.countTo],
-        article: values.article,
-        name: values.denomination,
-        description: type+', '+vendors[0]+','+values.denomination,
-      });
-      emit('close-filter-card-after-add-interest', false);
-    }
-  }
-  const filterOnlyInterests = async (event: Event) => {
-    event.preventDefault();
-    getInterests();
-    let vendors = [],
-        brands = [],
-        cities = [],
-        values = [];
-    interestsList.value.forEach((interest) => {
-
-      interest.vendor ? vendors.push(interest.vendor) : false;
-      interest.brand ? brands.push(interest.brand) : false;
-      interest.city ? cities.push(interest.city) : false;
-
-      let value = {
-        article: undefined,
-        countFrom: undefined,
-        countTo: undefined,
-        denomination: undefined,
-        priceFrom: undefined,
-        priceTo: undefined,
-      };
-      interest.article ? value.article = interest.article : false;
-      interest.countFrom ? value.countFrom = interest.countFrom : false;
-      interest.countTo ? value.countTo = interest.countTo : false;
-      interest.denomination ? value.denomination = interest.denomination : false;
-      interest.priceFrom ? value.priceFrom = interest.priceFrom : false;
-      interest.priceTo ? value.priceTo = interest.priceTo : false;
-      values.push(value);
-    });
-    handleFilterSubmit({ ...values, vendors, brands, cities });
-    showAll.value = true;
-    emit('close-filter-by-interests')
-  }
-  const filterAll = async (event: Event) => {
-    event.preventDefault();
-    handleFilterSubmit({});
-    emit('close-filter-by-interests')
-  }
-
   const showClearButton = ref(false);
 
   watch(form.values, () => {
@@ -147,7 +66,6 @@
 
   function closeFilter() {
     showClearButton.value = false;
-    showAll.value = false;
     emit('close-filter-card', false);
   }
 
@@ -166,6 +84,7 @@
       selectedBrands.value = (filterValues.value?.brands as string[]) ?? [];
     }
   });
+
   onMounted(() => {
     if (filterValues.value) {
       form.setValues({
@@ -186,7 +105,7 @@
 <template>
   <div
     v-if="isFilterCardOpen"
-    class="flex max-h-screen w-full flex-col justify-between bg-white lg:max-w-[355px]">
+    class="flex max-h-screen w-full flex-col justify-between overflow-y-hidden bg-white lg:max-w-[355px]">
     <div
       class="flex cursor-pointer items-center justify-between gap-x-2 border-b border-l border-r border-[#D0D4DB] px-2 py-4">
       <div class="group flex items-center gap-x-2" @click="closeFilter">
@@ -253,29 +172,22 @@
                 leave-to-class="opacity-0">
                 <ListboxOptions
                   class="absolute z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <RecycleScroller
-                    class="scroller flex h-full flex-col"
-                    :items="data?.data?.filters?.cities"
-                    :item-size="46"
-                    key-field="id"
-                    v-slot="{ item }">
-                    <ListboxOption
-                      :key="item.id"
-                      :value="item.id"
-                      as="template">
-                      <li
-                        class="mx-1 my-1 cursor-pointer select-none bg-gray-50 text-black rounded py-2 pl-3 pr-9 "
-                        :class="{
-                          '!bg-blue-200 hover:!bg-blue-100 !text-gray-900': selectedCities.some(
-                            (city) => city === item.id,
-                          ),
-                        }">
-                        <span class="block truncate font-normal">
-                          {{ item.title }}</span
-                        >
-                      </li>
-                    </ListboxOption>
-                  </RecycleScroller>
+                  <ListboxOption
+                    v-for="item in data?.data?.filters?.cities"
+                    :key="item.id"
+                    :value="item.id"
+                    as="template">
+                    <li
+                      class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
+                      :class="{
+                        '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
+                          selectedCities.some((city) => city === item.id),
+                      }">
+                      <span class="block truncate font-normal">
+                        {{ item.title }}</span
+                      >
+                    </li>
+                  </ListboxOption>
                 </ListboxOptions>
               </transition>
             </Listbox>
@@ -296,8 +208,8 @@
               <FilterInput number name="countTo" placeholder="До" />
             </div>
           </div>
-          <FilterInput v-if="isFilterByVendor" name="vendor" label="Поставщик" placeholder="" v-model="selectedVendor.title" disabled="true"/>
-          <div v-else class="relative inline-block text-left">
+
+          <div class="relative inline-block text-left">
             <Listbox v-model="selectedVendors" multiple>
               <div class="flex w-full items-center justify-between">
                 <p class="py-2 text-[13px] font-semibold text-[#101828]">
@@ -319,33 +231,27 @@
                 leave-to-class="opacity-0">
                 <ListboxOptions
                   class="absolute z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <RecycleScroller
-                    class="scroller flex h-full flex-col"
-                    :items="data?.data?.filters?.vendors"
-                    :item-size="46"
-                    key-field="id"
-                    v-slot="{ item }">
-                    <ListboxOption :key="item" :value="item" as="template">
-                      <li
-                        class="mx-1 my-1 cursor-pointer select-none bg-gray-50 text-black rounded py-2 pl-3 pr-9 "
-                        :class="{
-                          '!bg-blue-200 hover:!bg-blue-100 !text-gray-900': selectedVendors.some(
-                            (vendor) => vendor === item,
-                          ),
-                        }">
-                        <span class="block truncate font-normal">{{
-                          item
-                        }}</span>
-                      </li>
-                    </ListboxOption>
-                  </RecycleScroller>
+                  <ListboxOption
+                    v-for="item in data?.data?.filters?.vendors"
+                    :key="item"
+                    :value="item"
+                    as="template">
+                    <li
+                      class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
+                      :class="{
+                        '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
+                          selectedVendors.some((vendor) => vendor === item),
+                      }">
+                      <span class="block truncate font-normal">{{ item }}</span>
+                    </li>
+                  </ListboxOption>
                 </ListboxOptions>
               </transition>
             </Listbox>
           </div>
 
           <div class="relative inline-block text-left">
-            <Listbox v-model="selectedBrands" multiple >
+            <Listbox v-model="selectedBrands" multiple>
               <div class="flex w-full items-center justify-between">
                 <p class="pb-2 text-[13px] font-semibold text-[#101828]">
                   Бренд
@@ -365,26 +271,20 @@
                 leave-to-class="opacity-0">
                 <ListboxOptions
                   class="absolute top-0 z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <RecycleScroller
-                    class="scroller flex h-full flex-col"
-                    :items="data?.data?.filters?.brands"
-                    :item-size="46"
-                    key-field="id"
-                    v-slot="{ item }">
-                    <ListboxOption :key="item" :value="item" as="template">
-                      <li
-                        class="mx-1 my-1 cursor-pointer select-none bg-gray-50 text-black rounded py-2 pl-3 pr-9 "
-                        :class="{
-                          '!bg-blue-200 hover:!bg-blue-100 !text-gray-900': selectedBrands.some(
-                            (brand) => brand === item,
-                          ),
-                        }">
-                        <span class="block truncate font-normal">{{
-                          item
-                        }}</span>
-                      </li>
-                    </ListboxOption>
-                  </RecycleScroller>
+                  <ListboxOption
+                    v-for="item in data?.data?.filters?.brands"
+                    :key="item"
+                    :value="item"
+                    as="template">
+                    <li
+                      class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
+                      :class="{
+                        '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
+                          selectedBrands.some((brand) => brand === item),
+                      }">
+                      <span class="block truncate font-normal">{{ item }}</span>
+                    </li>
+                  </ListboxOption>
                 </ListboxOptions>
               </transition>
             </Listbox>
@@ -393,27 +293,10 @@
       </ScrollArea>
 
       <div
-        class="w-full md:min-w-[305px]">
-        <div v-if="!filterInterests" class="p-4">
-          <Button class="w-full border-[#0015fa] bg-[#000] hover:bg-gray-50 border-2 bg-opacity-0! text-[#0015fa] font-semibold" type="button" @click="addInterests">
-            Добавить в Интересы
-          </Button>
-        </div>
-        <div v-if="filterInterests && !showAll" class="p-4">
-          <Button class="w-full border-[#0015fa] bg-[#000] hover:bg-gray-50 border-2 bg-opacity-0! text-[#0015fa] font-semibold" type="button" @click="filterOnlyInterests">
-            Отображать только мои интресы
-          </Button>
-        </div>
-        <div v-if="filterInterests && showAll" class="p-4">
-          <Button class="w-full border-[#0015fa] bg-[#000] hover:bg-gray-50 border-2 bg-opacity-0! text-[#0015fa] font-semibold" type="button" @click="filterAll">
-            Отображать все
-          </Button>
-        </div>
-        <div v-if="!isFilterByVendor" class="p-4 border-t border-[#CCD0D9]">
-          <Button class="w-full text-[17px] font-semibold" type="submit">
-            Применить фильтр
-          </Button>
-        </div>
+        class="w-full border-t border-[#CCD0D9] bg-[#F9FAFB] p-4 md:min-w-[305px]">
+        <Button class="w-full text-[17px] font-semibold" type="submit">
+          Применить фильтр
+        </Button>
       </div>
     </form>
   </div>

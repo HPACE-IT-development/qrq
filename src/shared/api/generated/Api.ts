@@ -13,12 +13,22 @@ export interface SiteInfo {
   recaptcha_site_key?: string;
 }
 
+export interface PostUser {
+  username: string;
+  recaptcha?: string;
+}
+
+export interface VerifyUser {
+  username: string;
+  code: number;
+  recaptcha?: string;
+}
+
 export interface User {
   username?: string;
   recaptcha?: string;
   /** @format email */
   email?: string;
-  password: string;
   first_name?: string;
   last_name?: string;
   /**
@@ -27,6 +37,16 @@ export interface User {
    */
   date_of_birth?: string;
   phone?: string;
+}
+
+export interface AuthUserResponse {
+  message?: string;
+}
+
+export interface VerifyUserResponse {
+  success?: string;
+  refresh?: string;
+  access?: string;
 }
 
 export interface Profile {
@@ -44,6 +64,7 @@ export interface Profile {
 export type Profiles = Profile[];
 
 export interface UserAuth {
+  /** email or phone */
   username: string;
   password: string;
   recaptcha?: string;
@@ -60,17 +81,8 @@ export interface UserAuthVerify {
 export interface Token {
   refresh?: string;
   access?: string;
-  detail?: string;
 }
 
-export interface ErrorResponse {
-  detail?: string;
-}
-
-export type SearchPagination = Pick<
-  SearchResponse,
-  'has_next' | 'has_prev' | 'page' | 'items' | 'items_count' | 'pages'
->;
 export interface AccessToken {
   access?: string;
 }
@@ -141,14 +153,54 @@ export interface Bid {
   /** company_id */
   company?: number;
   /** category_id */
-  category: number;
+  category?: number;
   /** brand_id */
   brand?: number;
   /** destination_id */
   destinations?: number[];
+  destination?: number;
 }
 
 export type Bids = Bid[];
+
+
+export interface Ad {
+  id?: string;
+  /**
+   * @format date-time
+   * @example "2024-04-14T08:12:44.533679Z"
+   */
+  created_at?: string;
+  /** @format binary */
+  image?: File | null;
+  /**
+   * dictionary:
+   *   * 0 Создано
+   *   * 1 Опубликовано
+   *   * 2 Исполнено
+   *   * 3 Архивировано
+   * @default 0
+   */
+  status?: 0 | 1 | 2 | 3;
+  name: string;
+  article?: string;
+  price: number;
+  amount: number;
+  delivery_time?: number;
+  description?: string;
+  /** company_id */
+  company?: number;
+  /** category_id */
+  category?: number;
+  /** brand_id */
+  brand?: number;
+  /** city_id */
+  city?: number;
+  /** destination_id */
+  destinations?: number[];
+}
+
+export type Ads = Ad[]
 
 export interface Offer {
   id?: string;
@@ -177,7 +229,7 @@ export interface Offer {
   /** company_id */
   company?: number;
   /** category_id */
-  category: number;
+  category?: number;
   /** brand_id */
   brand?: number;
   /** city_id */
@@ -264,6 +316,50 @@ export interface OrderReturn {
 
 export type OrderReturns = OrderReturn[];
 
+export interface Interest {
+  id?: string;
+  /**
+   * @format date-time
+   * @example "2024-04-14T08:12:44.533679Z"
+   */
+  created_at?: string;
+  /** user_id */
+  related_user?: number;
+  /** brand_id */
+  brand?: number;
+  /** city_id */
+  city?: number;
+  amount?: number[];
+  delivery_time?: number[];
+  article?: string;
+  name?: string;
+  description?: string;
+}
+
+export type Interests = Interest[];
+
+export interface QwepInterest {
+  id?: string;
+  /**
+   * @format date-time
+   * @example "2024-04-14T08:12:44.533679Z"
+   */
+  created_at?: string;
+  /** user_id */
+  related_user?: number;
+  vendor?: string;
+  brand?: string;
+  /** city_id */
+  city?: number;
+  amount?: number[];
+  delivery_time?: number[];
+  article?: string;
+  name?: string;
+  description?: string;
+}
+
+export type QwepInterests = QwepInterest[];
+
 export interface PreSearchRequest {
   search: string;
   clear_cache?: boolean;
@@ -274,7 +370,6 @@ export interface PreSearchResponse {
   article?: string;
   brand?: string;
   part_name?: string;
-  vendor?: string;
 }
 
 export type PreSearchResponses = PreSearchResponse[];
@@ -320,6 +415,7 @@ export interface SearchRequest {
 
 export interface Item {
   itemId?: string;
+  accountId?: number;
   fromClarification?: string;
   brand?: string;
   highlightBrand?: string;
@@ -345,24 +441,16 @@ export interface Item {
   parsedDelivery?: string;
 }
 
-export interface InterestRequest {
-  related_user: number,
-  vendor: string,
-  brand: string,
-  city: number,
-  amount: [],
-  delivery_time: [],
-  article: string,
-  name: string,
-  description: string,
-}
-
-export interface SearchResponse {
+export interface SearchPagination {
   page?: number;
   pages?: number;
   has_next?: boolean;
   has_prev?: boolean;
   items_count?: number;
+}
+
+export interface SearchResponse extends SearchPagination {
+  search_id?: string;
   items?: Item[];
   filters?: SearchResponseFilters;
 }
@@ -385,12 +473,29 @@ export interface Vendor {
 
 export type Vendors = Vendor[];
 
+export interface Response {
+  success?: boolean;
+}
+
 export interface Error {
   detail: string;
 }
 
 export interface InlineResponse204 {
   success?: boolean;
+}
+
+export interface CartBody {
+  account_id: number;
+  cart_id: string;
+  cart_item_id: string;
+  quantity: number;
+}
+
+export interface CartBody1 {
+  search_id: string;
+  item_id: string;
+  quantity: number;
 }
 
 export interface ItemPrice {
@@ -454,15 +559,6 @@ export interface VendorData {
   tutorial?: string;
   warehouseAddress?: string;
   website?: string;
-}
-
-export interface AccountRequest {
-  vendor_id: string,
-  branch_id: string,
-  title: string,
-  login: string,
-  password: string,
-  is_active: true
 }
 
 import type {
@@ -656,24 +752,6 @@ export class Api<
      * No description
      *
      * @tags Auth
-     * @name TokenCreate
-     * @summary метод получения токенов
-     * @request POST:/token
-     */
-    tokenCreate: (data: UserAuth, params: RequestParams = {}) =>
-      this.request<Token, Error>({
-        path: `/token`,
-        method: 'POST',
-        body: data,
-        type: ContentType.Json,
-        format: 'json',
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Auth
      * @name RefreshCreate
      * @summary метод обновления токена
      * @request POST:/token/refresh
@@ -765,15 +843,36 @@ export class Api<
      * No description
      *
      * @tags User
-     * @name CreateUser
-     * @summary метод создания пользователя
+     * @name CreateAuthUser
+     * @summary метод создания или аутентификации пользователя
      * @request POST:/user
      */
-    createUser: (data: User, params: RequestParams = {}) =>
-      this.request<User, Error>({
+    createAuthUser: (data: PostUser, params: RequestParams = {}) =>
+      this.request<AuthUserResponse, Error>({
         path: `/user`,
         method: 'POST',
         body: data,
+        type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+  };
+  userVerify = {
+    /**
+     * @description токен опционально
+     *
+     * @tags User
+     * @name VerifyUser
+     * @summary метод верификации пользователя
+     * @request POST:/user_verify
+     * @secure
+     */
+    verifyUser: (data: VerifyUser, params: RequestParams = {}) =>
+      this.request<VerifyUserResponse, Error>({
+        path: `/user_verify`,
+        method: 'POST',
+        body: data,
+        secure: true,
         type: ContentType.Json,
         format: 'json',
         ...params,
@@ -1280,7 +1379,7 @@ export class Api<
      * @request GET:/nomenclatures/
      * @secure
      */
-    getNomenclatures: (params: RequestParams = {}) =>
+    getNomenclatures: (params?: { query: { search: string } }) =>
       this.request<Nomenclatures, Error>({
         path: `/nomenclatures/`,
         method: 'GET',
@@ -1379,10 +1478,23 @@ export class Api<
      * @request GET:/bids/
      * @secure
      */
-    getBids: (params: RequestParams = {}) =>
+    getBids: (
+      query?: {
+        /** поиск по наименованию, описанию */
+        search?: string;
+        /** фильтр по артикулу */
+        article?: string;
+        /** фильтр по количеству */
+        amount?: number;
+        /** список destination_id */
+        destinations?: number[];
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<Bids, Error>({
         path: `/bids/`,
         method: 'GET',
+        query: query,
         secure: true,
         format: 'json',
         ...params,
@@ -1464,6 +1576,114 @@ export class Api<
         ...params,
       }),
   };
+  ads = {
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name getAds
+     * @summary метод получения списка объявлений
+     * @request GET:/ads/
+     * @secure
+     */
+    getAds: (
+      query?: {
+        /** поиск по наименованию, описанию */
+        search?: string;
+        /** фильтр по артикулу */
+        article?: string;
+        /** фильтр по количеству */
+        amount?: number;
+        /** список destination_id */
+        destinations?: number[];
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<Ads, Error>({
+        path: `/ads/`,
+        method: 'GET',
+        query: query,
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Offers
+     * @name createAd
+     * @summary метод создания объявления
+     * @request POST:/ads/
+     * @secure
+     */
+    createAd: (data: Ad, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name getAd
+     * @summary метод получения объявления
+     * @request GET:/ads/{ad_id}
+     * @secure
+     */
+    getAd: (adId: number, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/${adId}`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name updateAd
+     * @summary метод изменения объявления
+     * @request PUT:/ads/{ad_id}
+     * @secure
+     */
+    updateAd: (adId: number, data: Ad, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/${adId}`,
+        method: 'PUT',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name deleteAd
+     * @summary метод удаления объявления
+     * @request DELETE:/ads/{ad_id}
+     * @secure
+     */
+    deleteAd: (adId: number, params: RequestParams = {}) =>
+      this.request<InlineResponse204, Error>({
+        path: `/ads/${adId}`,
+        method: 'DELETE',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+  };
   offers = {
     /**
      * No description
@@ -1474,10 +1694,23 @@ export class Api<
      * @request GET:/offers/
      * @secure
      */
-    getOffers: (params: RequestParams = {}) =>
+    getOffers: (
+      query?: {
+        /** поиск по наименованию, описанию */
+        search?: string;
+        /** фильтр по артикулу */
+        article?: string;
+        /** фильтр по количеству */
+        amount?: number;
+        /** список destination_id */
+        destinations?: number[];
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<Offers, Error>({
         path: `/offers/`,
         method: 'GET',
+        query: query,
         secure: true,
         format: 'json',
         ...params,
@@ -1852,6 +2085,105 @@ export class Api<
         ...params,
       }),
   };
+  interests = {
+    /**
+     * No description
+     *
+     * @tags Interests
+     * @name GetInterests
+     * @summary метод получения списка интересов
+     * @request GET:/interests/
+     * @secure
+     */
+    getInterests: (params: RequestParams = {}) =>
+      this.request<Interests, Error>({
+        path: `/interests/`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Interests
+     * @name CreateInterest
+     * @summary метод создания интереса
+     * @request POST:/interests/
+     * @secure
+     */
+    createInterest: (data: Interest, params: RequestParams = {}) =>
+      this.request<Interest, Error>({
+        path: `/interests/`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Interests
+     * @name GetInterest
+     * @summary метод получения интереса
+     * @request GET:/interests/{interest_id}
+     * @secure
+     */
+    getInterest: (interestId: number, params: RequestParams = {}) =>
+      this.request<Interest, Error>({
+        path: `/interests/${interestId}`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Interests
+     * @name UpdateInterest
+     * @summary метод изменения интереса
+     * @request PUT:/interests/{interest_id}
+     * @secure
+     */
+    updateInterest: (
+      interestId: number,
+      data: Interest,
+      params: RequestParams = {},
+    ) =>
+      this.request<Interest, Error>({
+        path: `/interests/${interestId}`,
+        method: 'PUT',
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Interests
+     * @name DeleteInterest
+     * @summary метод удаления интереса
+     * @request DELETE:/interests/{interest_id}
+     * @secure
+     */
+    deleteInterest: (interestId: number, params: RequestParams = {}) =>
+      this.request<InlineResponse204, Error>({
+        path: `/interests/${interestId}`,
+        method: 'DELETE',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+  };
   preSearch = {
     /**
      * No description
@@ -1907,56 +2239,185 @@ export class Api<
     getVendors: (params: RequestParams = {}) =>
       this.request<Vendors, Error>({
         path: `/vendors`,
-        method: 'GET',
+        method: 'POST',
         secure: true,
         format: 'json',
         ...params,
       }),
   };
-  interests = {
-    listInterests: () =>
-      this.request({
-        path: `/interests/`,
-        method: 'GET',
-        secure: false,
-        format: 'json',
-      }),
-    createInterest: (data: InterestRequest, params: RequestParams = {}) =>
-      this.request({
-        path: `/interests/`,
-        method: 'POST',
-        secure: false,
-        body: data,
-        format: 'json',
-        type: ContentType.Json,
-        ...params,
-      }),
-    getInterest: (id: RequestParams = {}) =>
-      this.request({
-        path: '/interests/'+id,
+  cart = {
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name GetCart
+     * @summary метод получения корзины
+     * @request GET:/cart
+     * @secure
+     */
+    getCart: (params: RequestParams = {}) =>
+      this.request<Vendors, Error>({
+        path: `/cart`,
         method: 'GET',
         secure: true,
         format: 'json',
-        ...id
-    }),
-    deleteInterest: (id: RequestParams = {}) =>
-        this.request({
-        path: '/interests/'+id,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name UpdateCartItem
+     * @summary метод изменения позиции корзины
+     * @request PUT:/cart
+     * @secure
+     */
+    updateCartItem: (data: CartBody, params: RequestParams = {}) =>
+      this.request<Response, Error>({
+        path: `/cart`,
+        method: 'PUT',
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name CreateCartItem
+     * @summary метод создания позиции корзины
+     * @request POST:/cart
+     * @secure
+     */
+    createCartItem: (data: CartBody1, params: RequestParams = {}) =>
+      this.request<Response, Error>({
+        path: `/cart`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name DeleteCartItem
+     * @summary метод удаления позиции корзины
+     * @request DELETE:/cart
+     * @secure
+     */
+    deleteCartItem: (params: RequestParams = {}) =>
+      this.request<Response, Error>({
+        path: `/cart`,
         method: 'DELETE',
         secure: true,
         format: 'json',
-        ...id,
-    }),
+        ...params,
+      }),
   };
-  accounts = {
-    createAccount: (data: AccountRequest, params: RequestParams = {}) =>
-      this.request({
-        path: `/accounts/`,
-        method: 'POST',
-        secure: false,
-        body: data,
+  qwepInterests = {
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name GetQwepInterests
+     * @summary метод получения списка интересов
+     * @request GET:/qwep_interests/
+     * @secure
+     */
+    getQwepInterests: (params: RequestParams = {}) =>
+      this.request<QwepInterests, Error>({
+        path: `/qwep_interests/`,
+        method: 'GET',
+        secure: true,
         format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name CreateQwepInterest
+     * @summary метод создания интереса
+     * @request POST:/qwep_interests/
+     * @secure
+     */
+    createQwepInterest: (data: QwepInterest, params: RequestParams = {}) =>
+      this.request<QwepInterest, Error>({
+        path: `/qwep_interests/`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name GetQwepInterest
+     * @summary метод получения интереса
+     * @request GET:/qwep_interests/{interest_id}
+     * @secure
+     */
+    getQwepInterest: (interestId: number, params: RequestParams = {}) =>
+      this.request<QwepInterest, Error>({
+        path: `/qwep_interests/${interestId}`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name UpdateQwepInterest
+     * @summary метод изменения интереса
+     * @request PUT:/qwep_interests/{interest_id}
+     * @secure
+     */
+    updateQwepInterest: (
+      interestId: number,
+      data: QwepInterest,
+      params: RequestParams = {},
+    ) =>
+      this.request<QwepInterest, Error>({
+        path: `/qwep_interests/${interestId}`,
+        method: 'PUT',
+        body: data,
+        secure: true,
         type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name DeleteQwepInterest
+     * @summary метод удаления интереса
+     * @request DELETE:/qwep_interests/{interest_id}
+     * @secure
+     */
+    deleteQwepInterest: (interestId: number, params: RequestParams = {}) =>
+      this.request<InlineResponse204, Error>({
+        path: `/qwep_interests/${interestId}`,
+        method: 'DELETE',
+        secure: true,
+        format: 'json',
         ...params,
       }),
   };

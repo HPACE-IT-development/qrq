@@ -174,8 +174,8 @@
     filterInterests.value = false;
   }
   function handleCloseFilterAfterAddInterest() {
-      isFilterCardOpen.value = false;
-      isAddedInterestCardOpen.value = true;
+    isFilterCardOpen.value = false;
+    isAddedInterestCardOpen.value = true;
   }
   function changeInterestView() {
     isFilterByVendor.value = false;
@@ -354,12 +354,12 @@
       @close-filter-by-interests="closeFilterByInterests"
       class="inline-block w-full sm:hidden lg:flex" />
     <MyInterests
-        v-if="!isMobile"
-        :is-interests-card-open="isInterestsCardOpen"
-        @close-interests-card="isInterestsCardOpen = false"
-        @change-view="changeInterestView"
-        @close-filter-by-interests="closeFilterByInterests"
-        class="flex w-full sm:hidden lg:flex" />
+      v-if="!isMobile"
+      :is-interests-card-open="isInterestsCardOpen"
+      @close-interests-card="isInterestsCardOpen = false"
+      @change-view="changeInterestView"
+      @close-filter-by-interests="closeFilterByInterests"
+      class="flex w-full sm:hidden lg:flex" />
     <AddedInterest
       v-if="!isMobile && isAddedInterestCardOpen"
       @close-added-card="isAddedInterestCardOpen = false"
@@ -384,24 +384,24 @@
     @close-filter-by-interests="closeFilterByInterests"
     class="flex w-full sm:hidden lg:inline-block" />
   <MyInterests
-      v-if="isMobile"
-      :is-interests-card-open="isInterestsCardOpen"
-      @close-interests-card="isInterestsCardOpen = false"
-      @change-view="changeInterestView"
-      @close-filter-by-interests="closeFilterByInterests"
-      class="flex w-full sm:hidden lg:inline-block"
+    v-if="isMobile"
+    :is-interests-card-open="isInterestsCardOpen"
+    @close-interests-card="isInterestsCardOpen = false"
+    @change-view="changeInterestView"
+    @close-filter-by-interests="closeFilterByInterests"
+    class="flex w-full sm:hidden lg:inline-block"
   />
   <VendorInfoCard
-      v-if="isMobile && isVendorInfoCardOpen"
-      @close-vendor-info-card="isVendorInfoCardOpen = false"
-      @open-vendor-credentials-card="isVendorCredentialsCardOpen = true"
+    v-if="isMobile && isVendorInfoCardOpen"
+    @close-vendor-info-card="isVendorInfoCardOpen = false"
+    @open-vendor-credentials-card="isVendorCredentialsCardOpen = true"
   />
   <AddedInterest
-      v-if="isMobile && isAddedInterestCardOpen"
-      @close-added-card="isAddedInterestCardOpen = false"
-      class="flex w-full sm:hidden lg:flex" />
+    v-if="isMobile && isAddedInterestCardOpen"
+    @close-added-card="isAddedInterestCardOpen = false"
+    class="flex w-full sm:hidden lg:flex" />
   <VendorCredentialsCard
-      v-if="isMobile && isVendorCredentialsCardOpen"
-      @close-card="isVendorCredentialsCardOpen=false"
-      @open-filter-by-vendor="handleOpenFilterByVendor"/>
+    v-if="isMobile && isVendorCredentialsCardOpen"
+    @close-card="isVendorCredentialsCardOpen=false"
+    @open-filter-by-vendor="handleOpenFilterByVendor"/>
 </template>

@@ -1,13 +1,18 @@
+import { $selectedAdvertisementId } from '@/entities/advertisement/model/advertisement-model';
 import { createMutation, keepFresh } from '@farfetched/core';
-import { createEvent, createStore, sample } from 'effector';
-import { not, spread } from 'patronum';
+import { createEffect, createEvent, createStore, sample } from 'effector';
+import { debug, not, spread } from 'patronum';
 
 import { $api } from '@/shared/api/api';
 
-import { deleteRequestMutation, editRequestMutation, myRequestsQuery } from '@/entities/requests';
+import {
+  deleteRequestMutation,
+  editRequestMutation,
+  myRequestsQuery,
+} from '@/entities/requests';
 
-import type { Bid, Brand } from '@/shared/api/generated/Api';
 import { searchQuery } from '@/entities/offer';
+import type { Bid, Brand } from '@/shared/api/generated/Api';
 
 type TSelectScreenMode = 'offers' | 'selectBrand' | 'history' | null;
 
@@ -29,6 +34,7 @@ interface BidMutationData {
   bid: BidWithName;
   brand: Brand;
 }
+export const editRequestSelected = createEvent<BidWithName>();
 
 export const deleteRequestClicked = createEvent<string>();
 export const archiveRequestClicked = createEvent<Bid>();
@@ -70,11 +76,14 @@ sample({
     mutation: editRequestMutation.start,
     $requestViewMode,
   }),
-})
+});
 
 keepFresh(myRequestsQuery, {
   automatically: true,
-  triggers: [deleteRequestMutation.finished.success, editRequestMutation.finished.success],
+  triggers: [
+    deleteRequestMutation.finished.success,
+    editRequestMutation.finished.success,
+  ],
 });
 
 sample({
@@ -89,14 +98,9 @@ sample({
   fn: (clk: FormValues) =>
     ({
       filterMutation: {
-        secure: true,
-        format: 'json',
-        path: '/bids',
-        query: {
-          search: clk.name,
-          amount: clk.count,
-          article: clk.article,
-        },
+        search: clk.name,
+        amount: parseInt(clk.count ?? '1'),
+        article: clk.article,
       },
       $filterOpened: false,
     }) as const,
@@ -105,13 +109,35 @@ sample({
 
 sample({
   clock: requestClicked,
-  filter: (clk) => !!clk.brandName && clk.brandName !== 'Не указано',
+  filter: (clk) => !clk.brand,
   fn: (clk) =>
     ({
+      $requestViewMode: 'selectBrand',
+      editRequestSelected: clk,
+    }) as const,
+  target: spread({ $requestViewMode, editRequestSelected }),
+});
+
+sample({
+  clock: requestClicked,
+  filter: (clk) => !!clk.brand,
+  fn: (clk) => {
+    const data = {
       search: clk.name,
       brand: clk.brandName ?? '',
-    }) as const,
-  target: [searchQuery.start, $searchQS],
+    };
+
+    return {
+      search: data,
+      qs: data,
+      id: clk.id,
+    } as const;
+  },
+  target: spread({
+    search: searchQuery.start,
+    qs: $searchQS,
+    id: $selectedAdvertisementId,
+  }),
 });
 
 sample({
@@ -125,18 +151,17 @@ export const bidMutation = createMutation({
       console.log(data.brand.name);
       console.log('brand not found');
     } else {
-      const response = await $api.bids.updateBid(parseInt(data.bid.id ?? ''), {
+      const response = await $api.bids.updateBid(parseInt(data.bid.id ?? '0'), {
         name: data.bid.name,
         amount: data.bid.amount,
         brand: parseInt(data.brand.id ?? ''),
-        category: data.bid.category,
+        category: data.bid.category ?? 1,
       });
       return response.data;
     }
   },
 });
 
-export const editRequestSelected = createEvent<BidWithName>();
 export const brandSelected = createEvent<Brand>();
 const $changedBid = createStore<BidWithName | null>(null);
 
@@ -157,7 +182,47 @@ sample({
   target: bidMutation.start,
 });
 
+const getBidWithBrandNameFx = createEffect(async (bid: Bid): Promise<BidWithName> => {
+  const bids = (await $api.bids.getBids()).data;
+  const brands = (await $api.brands.getBrands()).data;
+  const categories = (await $api.categories.getCategories()).data;
+
+  const brandsMap = new Map(brands.map((brand) => [brand.id, brand.name]));
+  const categoriesMap = new Map(
+    categories.map((category) => [category.id, category.name]),
+  );
+
+  return {
+    ...bid,
+    article: bid.article || 'Не указано',
+    // @ts-expect-error the backend expects a number, but returns a string as the id
+    brandName: brandsMap.get(bid.brand) || 'Не указано',
+    // @ts-expect-error the backend expects a number, but returns a string as the id
+    categoryName: categoriesMap.get(bid.category) || 'Не указано',
+  };
+});
+
+sample({
+  clock: bidMutation.finished.success,
+  fn: (clk) =>
+    ({
+      $requestViewMode: 'offers',
+      getBidWithBrandNameFx: clk.result,
+    }) as const,
+  target: spread({
+    $requestViewMode,
+    getBidWithBrandNameFx,
+  }),
+});
+
+sample({
+  clock: getBidWithBrandNameFx.doneData,
+  target: requestClicked,
+});
+
 keepFresh(myRequestsQuery, {
   automatically: true,
   triggers: [bidMutation.finished.success],
 });
+
+debug(requestClicked);
