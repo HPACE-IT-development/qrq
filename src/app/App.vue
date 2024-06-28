@@ -8,7 +8,7 @@
   import type { Item } from '@/shared/api/generated/Api';
   import { Auth, authFormOpened } from '@/widgets/auth';
   import { Header } from '@/widgets/header';
-  import { ManuallyAddOffer, Offers } from '@/widgets/offers';
+  import { ManuallyAddOffer, AddOffer, Offers } from '@/widgets/offers';
   import { Sidebar } from '@/widgets/sidebar';
 
   import { $selectedAdvertisement } from '@/entities/advertisement';
@@ -22,7 +22,7 @@
     ChangeCompany,
     changeCompanyVisibleChanged,
   } from '@/widgets/change-company';
-  import { $showAddOfferModal } from '@/widgets/offers/model/offers-model';
+  import { $showAddOfferModal, $showAddOfferWidget } from '@/widgets/offers/model/offers-model';
   import { useUnit } from 'effector-vue/composition';
   import NotFoundPage from '@/pages/not-found/ui/not-found-page.vue';
 
@@ -30,6 +30,7 @@
   const router = useRouter();
 
   const showAddOfferModal = useUnit($showAddOfferModal);
+  const showAddOfferWidget = useUnit($showAddOfferWidget);
   const requestViewMode = useUnit($requestViewMode);
   const openAuthForm = useUnit(authFormOpened);
   const selectedAdvertisement = useUnit($selectedAdvertisement);
@@ -278,6 +279,7 @@
       <ManuallyAddOffer
         v-if="
           showAddOfferModal &&
+          !showAddOfferWidget &&
           !isMobile &&
           route.path === '/advertisements' &&
           !isProductCardOpen &&
@@ -290,18 +292,19 @@
       <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
-      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddOfferModal"
+      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddOfferModal && !showAddOfferWidget"
       class="hidden h-screen w-full min-w-[360px] flex-col justify-between border-l border-[#D0D4DB] bg-[#F9FAFB] sm:w-[360px] lg:flex"></div>
     <ProductCard
-      v-if="productItem && !isMobile && !showAddOfferModal"
+      v-if="productItem && !isMobile && !showAddOfferModal && !showAddOfferWidget"
       :product-item="productItem"
       :is-product-card-open="isProductCardOpen"
       @close-product-card="handleCloseProductCard"
       class="flex w-full sm:hidden lg:flex" />
 
-    <ManuallyAddOffer v-if="!isMobile && showAddOfferModal" />
+    <ManuallyAddOffer v-if="!isMobile && showAddOfferModal && !showAddOfferWidget" />
+    <AddOffer v-if="!isMobile && showAddOfferWidget && !showAddOfferModal" />
     <Filter
-      v-if="!isMobile && !showAddOfferModal"
+      v-if="!isMobile && !showAddOfferModal && !showAddOfferWidget"
       :is-filter-card-open="isFilterCardOpen"
       @close-filter-card="isFilterCardOpen = false"
       class="inline-block w-full sm:hidden lg:flex" />
