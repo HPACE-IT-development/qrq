@@ -24,6 +24,7 @@
   } from '@/widgets/change-company';
   import { $showAddOfferModal } from '@/widgets/offers/model/offers-model';
   import { useUnit } from 'effector-vue/composition';
+  import NotFoundPage from '@/pages/not-found/ui/not-found-page.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -153,10 +154,16 @@
     isAuthOpen.value = true;
     openAuthForm('company');
   }
+
+  const isErrorPage = ref<boolean>(false);
+
+  watch(route, (newRoute) => {
+    isErrorPage.value = newRoute.name === 'NotFound';
+  });
 </script>
 
 <template>
-  <div class="flex flex-row bg-white">
+  <div class="flex flex-row bg-white" v-if='!isErrorPage'>
     <div class="flex h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
       <Header
         v-if="
@@ -299,6 +306,9 @@
       @close-filter-card="isFilterCardOpen = false"
       class="inline-block w-full sm:hidden lg:flex" />
   </div>
+  <not-found-page
+    v-else
+    class="inline-block w-full" />
   <Filter
     v-if="isMobile"
     :is-filter-card-open="isFilterCardOpen"
