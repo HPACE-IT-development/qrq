@@ -1,4 +1,4 @@
-import { attachLogger } from 'effector-logger';
+// import { attachLogger } from 'effector-logger';
 import NProgress from 'nprogress';
 import { createApp } from 'vue';
 import VueTheMask from 'vue-the-mask';

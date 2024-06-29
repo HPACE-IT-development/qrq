@@ -19,6 +19,12 @@
     ListboxOptions,
   } from '@headlessui/vue';
   import { useUnit } from 'effector-vue/composition';
+  import {
+    $buttonMode,
+    changeButtonMode,
+    createInterestQuery,
+    listInterestsQuery,
+  } from '@/pages/my-interests/model/interests-page-model';
 
   defineProps<{
     isFilterCardOpen: boolean;
@@ -26,6 +32,9 @@
 
   const selectedVendors = ref<string[]>([]);
   const selectedBrands = ref<string[]>([]);
+  const { data: interestsList } = useUnit(listInterestsQuery);
+
+  const showAddedMessage = ref<boolean>(false);
 
   const handleFilterSubmit = useUnit(filterSubmitted);
 
@@ -33,6 +42,13 @@
 
   const { data, pending } = useUnit(searchQuery);
   const filterValues = useUnit($filterValues);
+  const {
+    $buttonMode: buttonMode,
+    changeButtonMode: handleChangeButtonMode
+  } = useUnit({
+    $buttonMode,
+    changeButtonMode
+  });
 
   const { form } = useFilter(data?.value?.data.filters as any);
 
@@ -49,10 +65,76 @@
       const cities = selectedCities.value;
 
       handleFilterSubmit({ ...values, vendors, brands, cities });
-
-      closeFilter();
     }
   };
+
+  const filterByInterests = async (event: Event) => {
+    if (interestsList.value?.length !== 0 && interestsList.value) {
+      handleChangeButtonMode('show-interests')
+
+      selectedVendors.value = []
+      selectedBrands.value = []
+      selectedCities.value = []
+
+      interestsList.value.map((interest: any) => {
+        if (interest.vendor !== 'undefined' && selectedVendors.value.indexOf(interest.vendor) === -1) {
+          selectedVendors.value.push(interest.vendor)
+        }
+
+        if (interest.brand !== 'undefined' && selectedBrands.value.indexOf(interest.brand) === -1) {
+          selectedBrands.value.push(interest.brand)
+        }
+
+        if (interest.city !== 'undefined' && selectedCities.value.indexOf(interest.city) === -1) {
+          selectedCities.value.push(interest.city)
+        }
+      })
+
+      const vendors = selectedVendors.value;
+      const brands = selectedBrands.value;
+      const cities = selectedCities.value;
+
+      handleFilterSubmit({
+        vendors,
+        brands,
+        cities
+      })
+
+      await onSubmit(event)
+
+    } else await onSubmit(event)
+  }
+
+  const filterByAll = async (event: Event) => {
+    handleChangeButtonMode('show-all')
+
+    selectedVendors.value = []
+    selectedBrands.value = []
+    selectedCities.value = []
+
+    await onSubmit(event)
+  }
+
+  const addToInterests = async () => {
+    await form.validate();
+
+    if (Object.keys(form.errors.value).length === 0) {
+      const values = form.values;
+      const vendors = selectedVendors.value;
+      const brands = selectedBrands.value;
+      const cities = selectedCities.value;
+
+      createInterestQuery.start({
+        ...values,
+        vendor: vendors[0],
+        brand: brands[0],
+        city: cities[0]
+      });
+        showAddedMessage.value = true;
+        handleFilterSubmit({ ...values, vendors, brands, cities });
+      }
+
+    };
 
   const showClearButton = ref(false);
 
@@ -65,6 +147,7 @@
   });
 
   function closeFilter() {
+    showAddedMessage.value = false;
     showClearButton.value = false;
     emit('close-filter-card', false);
   }
@@ -121,7 +204,7 @@
       <Button
         variant="ghost"
         type="button"
-        v-if="showClearButton"
+        v-if="showClearButton && !showAddedMessage"
         @click="
           () => {
             form.resetForm();
@@ -140,7 +223,7 @@
       @submit="onSubmit"
       class="flex h-[calc(100%-64px)] flex-col justify-between border-l border-r border-[#D0D4DB] bg-white">
       <ScrollArea>
-        <div class="flex flex-col gap-y-4 p-4">
+        <div class="flex flex-col gap-y-4 p-4" v-if='!showAddedMessage'>
           <p class="text-[20px] font-semibold text-[#101828]">Фильтр</p>
 
           <FilterInput
@@ -148,6 +231,7 @@
             label="Наименование"
             placeholder="Наименование" />
           <FilterInput name="article" label="Артикул" placeholder="Артикул" />
+          <FilterInput name="description" label="Описание" placeholder="Описание" />
 
           <div class="relative inline-block text-left">
             <Listbox v-model="selectedCities" multiple>
@@ -289,10 +373,51 @@
               </transition>
             </Listbox>
           </div>
+          <Button
+            variant='tertiary'
+            class="w-full text-base font-semibold mt-4"
+            type="button"
+            @click='addToInterests'
+          >
+            Добавить в Интересы
+          </Button>
+          <Button
+            v-if="buttonMode === 'show-all' && interestsList?.length !== 0"
+            variant='tertiary'
+            class="text-base font-semibold"
+            type="button"
+            @click="filterByInterests"
+          >
+            Отображать только мои интересы
+          </Button>
+          <Button
+            v-if="buttonMode === 'show-interests'"
+            variant='tertiary'
+            class="text-base font-semibold"
+            type="button"
+            @click="filterByAll"
+          >
+            Отображать все
+          </Button>
+        </div>
+        <div
+          v-else
+          class="h-[calc(100vh-177px)] w-full border-t border-[#D0D4DB] bg-[#F9FAFB]">
+          <div class="mx-auto flex flex-col items-center justify-center gap-y-6 p-4">
+            <img src="./assets/star.png" class="mt-4">
+            <div class="flex flex-col items-center gap-y-2">
+              <p class="text-[16px]">Добавлено</p>
+              <p class="text-center text-[12px] text-[#858FA3]">
+                Чтобы посмотреть или удалить интерес, зайдите в этот <br/>
+                раздел через меню
+              </p>
+            </div>
+          </div>
         </div>
       </ScrollArea>
 
       <div
+        v-if='!showAddedMessage'
         class="w-full border-t border-[#CCD0D9] bg-[#F9FAFB] p-4 md:min-w-[305px]">
         <Button class="w-full text-[17px] font-semibold" type="submit">
           Применить фильтр
