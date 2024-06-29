@@ -334,6 +334,7 @@ export interface Interest {
   article?: string;
   name?: string;
   description?: string;
+  vendor?: string;
 }
 
 export type Interests = Interest[];

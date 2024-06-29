@@ -11,6 +11,7 @@
   import '../model/advertisement-page-model';
   import { $selectedAdvertisementId } from '@/entities/advertisement/model/advertisement-model';
   import { onMounted } from 'vue';
+  import VendorsList from '@/entities/vendors/ui/vendors-list.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -100,6 +101,7 @@
         v-if="preSearchData"
         :search-result="preSearchData?.data"
         class="custom-scrollbar h-full w-full overflow-auto bg-[#F9FAFB]" />
+
     </template>
 
     <SearchHistory

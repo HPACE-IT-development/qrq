@@ -4,7 +4,8 @@
   import myOffersIcon from '@/widgets/sidebar/assets/myOffersIcon.vue';
   import logoutIcon from '@/widgets/sidebar/assets/logoutIcon.vue';
   import { Button } from '@/shared/ui';
-  import { type DefineComponent } from 'vue';
+  import { type DefineComponent, markRaw, reactive } from 'vue';
+  import MyInterestsIcon from "@/widgets/sidebar/assets/myInterestsIcon.vue";
 
   export interface IButtonMobile {
     label: string;
@@ -12,36 +13,42 @@
     icon: DefineComponent<{}, {}, any> | null;
   }
 
-  const emit = defineEmits<{
-    (e: 'close-sidebar'): void;
-    (
-      e: 'navigate',
-      value: 'my-requests' | 'my-offers' | 'change-company' | 'add-company',
-    ): void;
-  }>();
+  const emit = defineEmits([
+    'close-sidebar',
+    'navigate',
+    'logout',
+    'add-company',
+    'my-requests',
+    'my-interest'
+  ]);
 
-  const sidebarItems: IButtonMobile[] = [
+  const sidebarItems = reactive<IButtonMobile[]>([
     {
       label: 'Мои Покупки',
-      icon: myRequestsIcon,
+      icon: markRaw(myRequestsIcon),
       action: () => emit('navigate', 'my-requests'),
     },
     {
       label: 'Мои продажи',
-      icon: myOffersIcon,
+      icon: markRaw(myOffersIcon),
       action: () => emit('navigate', 'my-offers'),
     },
     {
+      label: 'Мои интересы',
+      icon: markRaw(MyInterestsIcon),
+      action: () => emit('navigate', 'my-interests'),
+    },
+    {
       label: 'Переключить аккаунт',
-      icon: logoutIcon,
-      action: () => emit('navigate', 'change-company'),
+      icon: markRaw(logoutIcon),
+      action: () => emit('navigate', 'logout'),
     },
     {
       label: 'Добавить компанию',
-      icon: companyIcon,
+      icon: markRaw(companyIcon),
       action: () => emit('navigate', 'add-company'),
     },
-  ];
+  ]);
 </script>
 
 <template>
@@ -67,7 +74,7 @@
         :key="item.label"
         class="flex items-center">
         <Button @click="item.action" size="icon" variant="ghost">
-          <component v-bind:is="item?.icon" />
+          <component :is="item?.icon" />
         </Button>
         <p
           @click="item.action"
@@ -78,3 +85,5 @@
     </ul>
   </div>
 </template>
+
+<style scoped lang="postcss"></style>
