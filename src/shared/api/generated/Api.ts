@@ -2240,7 +2240,7 @@ export class Api<
     getVendors: (params: RequestParams = {}) =>
       this.request<Vendors, Error>({
         path: `/vendors`,
-        method: 'POST',
+        method: 'GET',
         secure: true,
         format: 'json',
         ...params,
