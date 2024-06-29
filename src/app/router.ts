@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { AdvertisementPage } from '@/pages/advertisement';
 import { MyRequestsPage } from '@/pages/my-requests';
 import { SearchHistory } from '@/widgets/search-history';
+import { NotFoundPage } from '@/pages/not-found';
 import NProgress from 'nprogress';
 
 const router = createRouter({
@@ -18,6 +19,11 @@ const router = createRouter({
     {
       path: '/search-history',
       component: SearchHistory,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: NotFoundPage,
     },
   ],
 });

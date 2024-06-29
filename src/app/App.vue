@@ -24,6 +24,7 @@
   import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
   import VendorInfoCard from "@/pages/vendor/ui/vendor-info-card.vue";
   import VendorCredentialsCard from "@/pages/vendor/ui/vendor-credentials-card.vue";
+  import NotFoundPage from '@/pages/not-found/ui/not-found-page.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -199,12 +200,17 @@
     isFilterByVendor.value = true;
     isFilterCardOpen.value = true;
   }
+
+  const isErrorPage = ref<boolean>(false);
+
+  watch(route, (newRoute) => {
+    isErrorPage.value = newRoute.name === 'NotFound';
+  });
 </script>
 
 <template>
-  <div class="flex flex-row bg-white">
-    <div
-      class="flex max-h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
+  <div class="flex flex-row bg-white" v-if='!isErrorPage'>
+    <div class="flex h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
       <Header
         v-if="
           isMobile &&
@@ -374,6 +380,9 @@
       @close-card="isVendorCredentialsCardOpen=false"
       @open-filter-by-vendor="handleOpenFilterByVendor"/>
   </div>
+  <not-found-page
+    v-else
+    class="inline-block w-full" />
   <Filter
     v-if="isMobile"
     :is-filter-card-open="isFilterCardOpen"
