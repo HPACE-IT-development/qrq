@@ -51,8 +51,8 @@
       cn(
         'flex flex-col items-start justify-between gap-y-1 rounded-lg border-2 bg-white p-4 pr-5 duration-200 hover:border-[#0017FC] hover:bg-[#1778EA] hover:bg-opacity-10',
         route.query['search'] === item.name &&
-          route.query['active-pre-search'] === item.brandName &&
-          'border-[#0017FC] bg-[#1778EA] bg-opacity-10',
+        route.query['active-pre-search'] === item.brandName &&
+        'border-[#0017FC] bg-[#1778EA] bg-opacity-10',
       )
     "
     class="px-4 py-3 transition-all duration-75 hover:border-[#0017FC]">
