@@ -1,6 +1,10 @@
-import {createQuery} from '@farfetched/core';
+import { createQuery, keepFresh } from '@farfetched/core';
 import type {RequestParams} from '@/shared/api/generated/Api';
 import {$qwepApi} from "@/shared/api/api";
+import { createEvent, createStore, sample } from 'effector';
+import { spread } from 'patronum';
+
+type TButtonMode = 'show-all' | 'show-interests';
 
 export const listInterestsQuery = createQuery({
     handler: async () => {
@@ -25,3 +29,32 @@ export const deleteInterestQuery = createQuery({
         return (await $qwepApi.interests.deleteInterest(data)).data;
     }
 });
+
+export const handleMount = createEvent()
+export const formClosed = createEvent()
+export const changeButtonMode = createEvent<TButtonMode>()
+export const $buttonMode = createStore<TButtonMode>('show-all').reset([
+    formClosed,
+]);
+
+sample({
+    clock: handleMount,
+    target: listInterestsQuery.start
+})
+
+sample({
+    clock: changeButtonMode,
+    fn: (mode ) => ({
+       $buttonMode: mode
+    }),
+    target: spread({ $buttonMode })
+})
+
+
+keepFresh(listInterestsQuery, {
+    automatically: true,
+    triggers: [
+        createInterestQuery.finished.success,
+        deleteInterestQuery.finished.success,
+    ]
+})

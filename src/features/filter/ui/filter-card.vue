@@ -19,7 +19,12 @@
     ListboxOptions,
   } from '@headlessui/vue';
   import { useUnit } from 'effector-vue/composition';
-  import { createInterestQuery } from '@/pages/my-interests/model/interests-page-model';
+  import {
+    $buttonMode,
+    changeButtonMode,
+    createInterestQuery,
+    listInterestsQuery,
+  } from '@/pages/my-interests/model/interests-page-model';
 
   defineProps<{
     isFilterCardOpen: boolean;
@@ -27,6 +32,7 @@
 
   const selectedVendors = ref<string[]>([]);
   const selectedBrands = ref<string[]>([]);
+  const { data: interestsList } = useUnit(listInterestsQuery);
 
   const showAddedMessage = ref<boolean>(false);
 
@@ -36,6 +42,13 @@
 
   const { data, pending } = useUnit(searchQuery);
   const filterValues = useUnit($filterValues);
+  const {
+    $buttonMode: buttonMode,
+    changeButtonMode: handleChangeButtonMode
+  } = useUnit({
+    $buttonMode,
+    changeButtonMode
+  });
 
   const { form } = useFilter(data?.value?.data.filters as any);
 
@@ -52,10 +65,55 @@
       const cities = selectedCities.value;
 
       handleFilterSubmit({ ...values, vendors, brands, cities });
-
-      closeFilter();
     }
   };
+
+  const filterByInterests = async (event: Event) => {
+    if (interestsList.value?.length !== 0 && interestsList.value) {
+      handleChangeButtonMode('show-interests')
+
+      selectedVendors.value = []
+      selectedBrands.value = []
+      selectedCities.value = []
+
+      interestsList.value.map((interest: any) => {
+        if (interest.vendor !== 'undefined' && selectedVendors.value.indexOf(interest.vendor) === -1) {
+          selectedVendors.value.push(interest.vendor)
+        }
+
+        if (interest.brand !== 'undefined' && selectedBrands.value.indexOf(interest.brand) === -1) {
+          selectedBrands.value.push(interest.brand)
+        }
+
+        if (interest.city !== 'undefined' && selectedCities.value.indexOf(interest.city) === -1) {
+          selectedCities.value.push(interest.city)
+        }
+      })
+
+      const vendors = selectedVendors.value;
+      const brands = selectedBrands.value;
+      const cities = selectedCities.value;
+
+      handleFilterSubmit({
+        vendors,
+        brands,
+        cities
+      })
+
+      await onSubmit(event)
+
+    } else await onSubmit(event)
+  }
+
+  const filterByAll = async (event: Event) => {
+    handleChangeButtonMode('show-all')
+
+    selectedVendors.value = []
+    selectedBrands.value = []
+    selectedCities.value = []
+
+    await onSubmit(event)
+  }
 
   const addToInterests = async () => {
     await form.validate();
@@ -66,9 +124,16 @@
       const brands = selectedBrands.value;
       const cities = selectedCities.value;
 
-      createInterestQuery.start({ ...values, vendors, brands, cities });
+      createInterestQuery.start({
+        ...values,
+        vendor: vendors[0],
+        brand: brands[0],
+        city: cities[0]
+      });
         showAddedMessage.value = true;
+        handleFilterSubmit({ ...values, vendors, brands, cities });
       }
+
     };
 
   const showClearButton = ref(false);
@@ -166,6 +231,7 @@
             label="Наименование"
             placeholder="Наименование" />
           <FilterInput name="article" label="Артикул" placeholder="Артикул" />
+          <FilterInput name="description" label="Описание" placeholder="Описание" />
 
           <div class="relative inline-block text-left">
             <Listbox v-model="selectedCities" multiple>
@@ -309,10 +375,29 @@
           </div>
           <Button
             variant='tertiary'
-            class="w-full text-[17px] font-semibold mt-4"
+            class="w-full text-base font-semibold mt-4"
             type="button"
-            @click='addToInterests'>
+            @click='addToInterests'
+          >
             Добавить в Интересы
+          </Button>
+          <Button
+            v-if="buttonMode === 'show-all' && interestsList?.length !== 0"
+            variant='tertiary'
+            class="text-base font-semibold"
+            type="button"
+            @click="filterByInterests"
+          >
+            Отображать только мои интересы
+          </Button>
+          <Button
+            v-if="buttonMode === 'show-interests'"
+            variant='tertiary'
+            class="text-base font-semibold"
+            type="button"
+            @click="filterByAll"
+          >
+            Отображать все
           </Button>
         </div>
         <div

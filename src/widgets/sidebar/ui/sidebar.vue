@@ -4,7 +4,7 @@
   import myOffersIcon from '@/widgets/sidebar/assets/myOffersIcon.vue';
   import logoutIcon from '@/widgets/sidebar/assets/logoutIcon.vue';
   import { Button } from '@/shared/ui';
-  import { type DefineComponent, reactive } from 'vue';
+  import { type DefineComponent, markRaw, reactive } from 'vue';
   import MyInterestsIcon from "@/widgets/sidebar/assets/myInterestsIcon.vue";
 
   export interface IButtonMobile {
@@ -25,27 +25,27 @@
   const sidebarItems = reactive<IButtonMobile[]>([
     {
       label: 'Мои Покупки',
-      icon: myRequestsIcon,
+      icon: markRaw(myRequestsIcon),
       action: () => emit('navigate', 'my-requests'),
     },
     {
       label: 'Мои продажи',
-      icon: myOffersIcon,
+      icon: markRaw(myOffersIcon),
       action: () => emit('navigate', 'my-offers'),
     },
     {
       label: 'Мои интересы',
-      icon: MyInterestsIcon,
+      icon: markRaw(MyInterestsIcon),
       action: () => emit('navigate', 'my-interests'),
     },
     {
       label: 'Переключить аккаунт',
-      icon: logoutIcon,
+      icon: markRaw(logoutIcon),
       action: () => emit('navigate', 'logout'),
     },
     {
       label: 'Добавить компанию',
-      icon: companyIcon,
+      icon: markRaw(companyIcon),
       action: () => emit('navigate', 'add-company'),
     },
   ]);
@@ -74,7 +74,7 @@
         :key="item.label"
         class="flex items-center">
         <Button @click="item.action" size="icon" variant="ghost">
-          <component v-bind:is="item?.icon" />
+          <component :is="item?.icon" />
         </Button>
         <p
           @click="item.action"

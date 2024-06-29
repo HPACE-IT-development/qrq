@@ -6,7 +6,8 @@
   import {onMounted, defineProps} from "vue";
   import {
     deleteInterestQuery,
-    listInterestsQuery
+    listInterestsQuery,
+    handleMount
   } from "@/pages/my-interests/model/interests-page-model";
 
   import {useUnit} from "effector-vue/composition";
@@ -20,9 +21,9 @@
 
   const emits = defineEmits(['close-interests-card', 'change-view', 'open-interests-card', 'close-filter-by-interests']);
   const buttonList = getButtonList();
-  const {start: handleMount, data: interestsList} = useUnit(listInterestsQuery);
+  const { data: interestsList } = useUnit(listInterestsQuery);
   const changeRequestViewMode = useUnit(requestViewModeChanged);
-  const {start: handleRemove} = useUnit(deleteInterestQuery);
+  const { start: handleRemove } = useUnit(deleteInterestQuery);
   const handleFilterSubmit = useUnit(filterSubmitted);
 
 
@@ -38,25 +39,35 @@
   const openFilter = () => {
     emits('change-view', false);
   };
-  const submit = async (id) => {
+  const submit = async (id: any) => {
+    if (interestsList.value === null) return;
     let filterBy = interestsList.value.find((interest) => interest.id === id);
+
+    if (!filterBy) return;
+
     let vendors = filterBy.vendor;
     let brands = filterBy.brand;
     let cities = filterBy.city;
-    let search = filterBy.description.split(',').pop();
+    let search = filterBy.description?.split(',').pop();
     let values = {
       article: filterBy.article,
       countFrom: JSON.parse(filterBy.delivery_time).lower,
-      countTo:      JSON.parse(filterBy.delivery_time).upper,
-      priceFrom:      JSON.parse(filterBy.amount).lower,
-      priceTo:      JSON.parse(filterBy.amount).upper
+      countTo: JSON.parse(filterBy.delivery_time).upper,
+      priceFrom: JSON.parse(filterBy.amount).lower,
+      priceTo: JSON.parse(filterBy.amount).upper
     };
+
+    if (!vendors || !brands || !cities) return;
 
     handleFilterSubmit({ ...values, search, vendors, brands, cities });
     changeRequestViewMode('offers');
     emits('close-filter-by-interests');
   };
-  onMounted(handleMount);
+
+  onMounted(() => {
+    handleMount()
+  });
+
 </script>
 
 <template>
