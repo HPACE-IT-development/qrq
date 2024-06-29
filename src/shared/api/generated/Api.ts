@@ -163,6 +163,45 @@ export interface Bid {
 
 export type Bids = Bid[];
 
+
+export interface Ad {
+  id?: string;
+  /**
+   * @format date-time
+   * @example "2024-04-14T08:12:44.533679Z"
+   */
+  created_at?: string;
+  /** @format binary */
+  image?: File | null;
+  /**
+   * dictionary:
+   *   * 0 Создано
+   *   * 1 Опубликовано
+   *   * 2 Исполнено
+   *   * 3 Архивировано
+   * @default 0
+   */
+  status?: 0 | 1 | 2 | 3;
+  name: string;
+  article?: string;
+  price: number;
+  amount: number;
+  delivery_time?: number;
+  description?: string;
+  /** company_id */
+  company?: number;
+  /** category_id */
+  category?: number;
+  /** brand_id */
+  brand?: number;
+  /** city_id */
+  city?: number;
+  /** destination_id */
+  destinations?: number[];
+}
+
+export type Ads = Ad[]
+
 export interface Offer {
   id?: string;
   /**
@@ -1340,7 +1379,7 @@ export class Api<
      * @request GET:/nomenclatures/
      * @secure
      */
-    getNomenclatures: (params: RequestParams = {}) =>
+    getNomenclatures: (params?: { query: { search: string } }) =>
       this.request<Nomenclatures, Error>({
         path: `/nomenclatures/`,
         method: 'GET',
@@ -1531,6 +1570,114 @@ export class Api<
     deleteBid: (bidId: number, params: RequestParams = {}) =>
       this.request<InlineResponse204, Error>({
         path: `/bids/${bidId}`,
+        method: 'DELETE',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+  };
+  ads = {
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name getAds
+     * @summary метод получения списка объявлений
+     * @request GET:/ads/
+     * @secure
+     */
+    getAds: (
+      query?: {
+        /** поиск по наименованию, описанию */
+        search?: string;
+        /** фильтр по артикулу */
+        article?: string;
+        /** фильтр по количеству */
+        amount?: number;
+        /** список destination_id */
+        destinations?: number[];
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<Ads, Error>({
+        path: `/ads/`,
+        method: 'GET',
+        query: query,
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Offers
+     * @name createAd
+     * @summary метод создания объявления
+     * @request POST:/ads/
+     * @secure
+     */
+    createAd: (data: Ad, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name getAd
+     * @summary метод получения объявления
+     * @request GET:/ads/{ad_id}
+     * @secure
+     */
+    getAd: (adId: number, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/${adId}`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name updateAd
+     * @summary метод изменения объявления
+     * @request PUT:/ads/{ad_id}
+     * @secure
+     */
+    updateAd: (adId: number, data: Ad, params: RequestParams = {}) =>
+      this.request<Ad, Error>({
+        path: `/ads/${adId}`,
+        method: 'PUT',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ads
+     * @name deleteAd
+     * @summary метод удаления объявления
+     * @request DELETE:/ads/{ad_id}
+     * @secure
+     */
+    deleteAd: (adId: number, params: RequestParams = {}) =>
+      this.request<InlineResponse204, Error>({
+        path: `/ads/${adId}`,
         method: 'DELETE',
         secure: true,
         format: 'json',
