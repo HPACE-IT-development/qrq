@@ -12,8 +12,7 @@
   import type { Item } from '@/shared/api/generated/Api';
   import { useRoute, useRouter } from 'vue-router';
   import { useUnit } from 'effector-vue/composition';
-  import { offerAddButtonClicked } from '@/widgets/offers';
-  import { offerWidgetAddButtonClicked } from '@/widgets/offers/model/offers-model';
+  import { offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
 
   const api = ref<CarouselApi>();
   const totalCount = ref(0);
@@ -36,7 +35,7 @@
   function setApi(val: CarouselApi) {
     api.value = val;
   }
-  const handleAddOfferWidget = useUnit(offerWidgetAddButtonClicked);
+  const handleAddOffer = useUnit(offerAddButtonClicked);
 
   watchOnce(api, (api) => {
     if (!api) return;
@@ -144,7 +143,7 @@
 
     <div class="inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4 flex flex-col gap-4">
       <Button variant='tertiary' class="w-full text-[17px] font-semibold">Показать телефон</Button>
-      <Button class="w-full text-[17px] font-semibold" @click="handleAddOfferWidget()">Дать предложение</Button>
+      <Button class="w-full text-[17px] font-semibold" @click="handleAddOffer()">Дать предложение</Button>
     </div>
   </div>
 </template>

@@ -16,7 +16,7 @@
     (e: 'close-sidebar'): void;
     (
       e: 'navigate',
-      value: 'my-requests' | 'my-offers' | 'change-company' | 'add-company',
+      value: 'my-requests' | 'my-offers' | 'my-suggestions' | 'change-company' | 'add-company',
     ): void;
   }>();
 
@@ -30,6 +30,11 @@
       label: 'Мои продажи',
       icon: myOffersIcon,
       action: () => emit('navigate', 'my-offers'),
+    },
+    {
+      label: 'Мои предложения',
+      icon: myOffersIcon,
+      action: () => emit('navigate', 'my-suggestions'),
     },
     {
       label: 'Переключить аккаунт',

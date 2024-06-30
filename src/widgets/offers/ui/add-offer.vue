@@ -3,11 +3,12 @@
   import { X } from 'lucide-vue-next';
   import FormInput from '@/widgets/offers/ui/form-input.vue';
   import { useUnit } from 'effector-vue/composition';
-  import { formSubmitted, offerWidgetAddButtonClicked } from '@/widgets/offers/model/offers-model';
+  import { formSubmitted, offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
   import { useOfferForm } from '@/widgets/offers/lib/add-offer-schema';
+  import FormLabel from '@/shared/ui/form/FormLabel.vue';
   const { form } = useOfferForm();
 
-  const handleClose = useUnit(offerWidgetAddButtonClicked);
+  const handleClose = useUnit(offerAddButtonClicked);
   const handleSubmit = useUnit(formSubmitted);
   const onSubmit = async () => {
     await form.validate();
