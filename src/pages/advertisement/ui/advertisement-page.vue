@@ -11,13 +11,11 @@
   import '../model/advertisement-page-model';
   import { $selectedAdvertisementId } from '@/entities/advertisement/model/advertisement-model';
   import { onMounted, watch } from 'vue';
-  import VendorsList from '@/entities/vendors/ui/vendors-list.vue';
-
+  import { VendorsList } from '@/entities/vendors';
   const route = useRoute();
   const router = useRouter();
 
   const searchValue = useUnit($searchTerm);
-
   const { start: search, data: searchData } = useUnit(searchQuery);
   const { data: preSearchData } = useUnit(preSearchQuery);
   const selectedAdvertisement = useUnit($selectedAdvertisementId);
@@ -45,37 +43,11 @@
       return `Найдено ${count} объявлений`;
     }
   }
-
   const emit = defineEmits([
     'advertisementClicked',
     'advertisementItems',
     'advertisementFilters',
   ]);
-
-  const handleCardClicked = async (data: PreSearchResponse) => {
-    try {
-      const { article, brand } = data;
-      await router.push({
-        path: '/advertisements',
-        query: {
-          search: route.query.search,
-          'active-pre-search': brand,
-          'active-card': route.query['active-card'],
-        },
-      });
-      if (data) {
-        search({
-          search: article?.toString() ?? '',
-          page: searchData.value?.data.page,
-          page_size: 10,
-          brand: brand?.toString() ?? '',
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   watch(() => searchData.value, () => {
     console.log(searchData.value);
   })
@@ -102,6 +74,10 @@
         searchValue
       ">
       <AdvertisementList
+        v-if="preSearchData"
+        :search-result="preSearchData?.data"
+        class="custom-scrollbar h-full w-full overflow-auto bg-[#F9FAFB]" />
+      <VendorsList
         v-if="preSearchData"
         :search-result="preSearchData?.data"
         class="custom-scrollbar h-full w-full overflow-auto bg-[#F9FAFB]" />

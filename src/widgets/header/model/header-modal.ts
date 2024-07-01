@@ -6,7 +6,9 @@ import { persist } from 'effector-storage/query';
 export const searchTermInputed = createEvent<string>();
 export const sortTypeSelected = createEvent<number>();
 
-export const $searchTerm = createStore<string | null>(null);
+export const $searchTerm = createStore<string | null>(null)
+  .on(searchTermInputed, (_, term) => term);
+
 export const $selectedSortType = createStore<number>(-1);
 sample({
   clock: sortTypeSelected,

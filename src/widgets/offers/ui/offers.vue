@@ -1,10 +1,8 @@
 <script setup lang="ts">
   import { Button } from '@/shared/ui/button';
-
   import { OfferList, searchQuery } from '@/entities/offer';
   import type { Item } from '@/shared/api/generated/Api';
   import { onMounted, ref } from 'vue';
-
   import { $filterValues } from '@/features/filter';
   import {
     Pagination,
@@ -78,27 +76,23 @@
 <template>
   <div class="flex w-full flex-col sm:max-h-[100vh]">
     <div class="w-full min-w-[350px]">
-      <div
-        class="flex items-center border-b border-r border-[#D0D4DB] bg-white p-4 pr-5">
+      <div class="flex items-center border-b border-r border-[#D0D4DB] bg-white p-4 pr-5">
         <Button
           class="-ml-2 sm:hidden"
           @click="$emit('closeOffers')"
           size="icon"
           variant="ghost">
-          <img
-            src="./assets/backIcon.svg"
-            class="h-6 w-6 select-none"
-            alt="arrow" />
+          <img src="./assets/backIcon.svg" class="h-6 w-6 select-none" alt="arrow" />
         </Button>
 
         <div class="flex w-full items-center justify-between">
           <h3 class="text-[18px] font-semibold">
-            {{ getAnnouncementText(data?.data.items_count ?? 0) }}
+            {{ getAnnouncementText(data?.data?.items_count ?? 0) }}
           </h3>
           <div class="flex gap-x-2">
             <Button
               v-if="
-                getAnnouncementText(data?.data.items_count ?? 0) !==
+                getAnnouncementText(data?.data?.items_count ?? 0) !==
                   'Нет предложений' || filterValues
               "
               @click="handleFilterClick"
@@ -108,7 +102,7 @@
             </Button>
             <Button
               v-if="
-                getAnnouncementText(data?.data.items_count ?? 0) !==
+                getAnnouncementText(data?.data?.items_count ?? 0) !==
                   'Нет предложений' || filterValues
               "
               @click="handleAddOffer()"
@@ -122,23 +116,23 @@
     </div>
 
     <ScrollArea
-      v-if="data?.data.items"
+      v-if="data?.data?.items"
       class="flex max-h-[calc(100vh-72px)] flex-col gap-y-4 px-4 max-sm:max-h-[calc(100vh-201px)]">
       <OfferList
-        :offers-items="data?.data.items as any"
+        :offers-items="data?.data?.items as any"
         @offer-clicked="handleItemClick" />
       <div class="mx-auto flex w-fit bg-[#F9FAFB] py-2">
         <Pagination
-          v-if="!!data?.data.pages"
+          v-if="!!data?.data?.pages"
           v-slot="{ page }"
-          :total="data?.data.items_count"
+          :total="data?.data?.items_count"
           :sibling-count="1"
           :show-edges="!isMobile"
           @update:page="(value) => $emit('page-selected', value)"
           v-model:page="page"
           class="mx-auto gap-1 sm:-translate-x-1 sm:gap-2">
           <PaginationList v-slot="{ items }" class="flex items-center gap-1">
-            <PaginationPrev v-if="data?.data.has_prev" />
+            <PaginationPrev v-if="data?.data?.has_prev" />
 
             <template v-for="(item, index) in items">
               <PaginationListItem
@@ -155,7 +149,7 @@
               <PaginationEllipsis v-else :key="item.type" :index="index" />
             </template>
 
-            <PaginationNext v-if="data?.data.has_next" />
+            <PaginationNext v-if="data?.data?.has_next" />
           </PaginationList>
         </Pagination>
       </div>

@@ -49,12 +49,16 @@
     let brands = filterBy.brand;
     let cities = filterBy.city;
     let search = filterBy.description?.split(',').pop();
+
+    let deliveryTime = filterBy.delivery_time ? JSON.parse(filterBy.delivery_time) : null;
+    let amount = filterBy.amount ? JSON.parse(filterBy.amount) : null;
+
     let values = {
       article: filterBy.article,
-      countFrom: JSON.parse(filterBy.delivery_time).lower,
-      countTo: JSON.parse(filterBy.delivery_time).upper,
-      priceFrom: JSON.parse(filterBy.amount).lower,
-      priceTo: JSON.parse(filterBy.amount).upper
+      countFrom: deliveryTime ? deliveryTime.lower : null,
+      countTo: deliveryTime ? deliveryTime.upper : null,
+      priceFrom: amount ? amount.lower : null,
+      priceTo: amount ? amount.upper : null
     };
 
     if (!vendors || !brands || !cities) return;

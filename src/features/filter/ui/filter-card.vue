@@ -126,9 +126,9 @@
 
       createInterestQuery.start({
         ...values,
-        vendor: vendors[0],
-        brand: brands[0],
-        city: cities[0]
+        vendor: vendors,
+        brand: brands,
+        city: cities
       });
         showAddedMessage.value = true;
         handleFilterSubmit({ ...values, vendors, brands, cities });

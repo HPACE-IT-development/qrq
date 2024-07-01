@@ -319,14 +319,14 @@
         @close-product-card="handleCloseProductCard"
         class="hidden sm:flex lg:hidden" />
 
-      <ManuallyAddOffer
-        v-if="
-          showAddOfferModal &&
-          !isMobile &&
-          route.path === '/advertisements' &&
-          !isProductCardOpen &&
-          !isFilterCardOpen
-        " />
+<!--      <ManuallyAddOffer-->
+<!--        v-if="-->
+<!--          showAddOfferModal &&-->
+<!--          !isMobile &&-->
+<!--          route.path === '/advertisements' &&-->
+<!--          !isProductCardOpen &&-->
+<!--          !isFilterCardOpen-->
+<!--        " />-->
       <!--      <Filter-->
       <!--        v-if="isFilterCardOpen && !isMobile && !isProductCardOpen"-->
       <!--        :is-filter-card-open="isFilterCardOpen"-->
@@ -342,8 +342,15 @@
       :is-product-card-open="isProductCardOpen"
       @close-product-card="handleCloseProductCard"
       class="flex w-full sm:hidden lg:flex" />
-
-    <ManuallyAddOffer v-if="!isMobile && showAddOfferModal" />
+    <ManuallyAddOffer
+      v-if="
+          showAddOfferModal &&
+          !isMobile &&
+          route.path === '/advertisements' &&
+          !isProductCardOpen &&
+          !isFilterCardOpen
+        " />
+<!--    <ManuallyAddOffer v-if="!isMobile && showAddOfferModal" />-->
     <Filter
       v-if="!isMobile && !showAddOfferModal"
       :is-filter-card-open="isFilterCardOpen"

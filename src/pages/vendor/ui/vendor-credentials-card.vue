@@ -127,7 +127,10 @@ function closeCard() {
     </div>
     <div
         class="inset-x-0 bottom-0 flex w-full flex-col gap-y-3 border-t border-[#CCD0D9] bg-white p-4">
-      <Button @click.prevent="onSubmit" class="w-full border-[#0015fa] bg-[#000] hover:bg-gray-50 border-2 bg-opacity-0! text-[#0015fa] font-semibold"
+      <Button @click.prevent="onSubmit"
+              variant='tertiary'
+              class="w-full text-base font-semibold mt-4"
+              type="button"
       >Добавить в Интересы</Button
       >
     </div>

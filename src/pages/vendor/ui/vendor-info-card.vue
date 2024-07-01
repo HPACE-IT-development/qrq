@@ -51,8 +51,10 @@ function addCredentials() {
     </div>
     <div class="p-4">
       <Button
-          class="w-full border-[#0015fa] bg-[#000] hover:bg-gray-50 border-2 bg-opacity-0! text-[#0015fa] font-semibold"
-          type="button" @click="addCredentials">
+        variant='tertiary'
+        class="w-full text-base font-semibold mt-4"
+        type="button"
+        @click="addCredentials">
         Добавить в Интересы
       </Button>
     </div>
