@@ -35,7 +35,6 @@ interface BidMutationData {
   brand: Brand;
 }
 export const editRequestSelected = createEvent<BidWithName>();
-
 export const deleteRequestClicked = createEvent<string>();
 export const archiveRequestClicked = createEvent<Bid>();
 export const filterVisibilityChanged = createEvent<boolean | void>();

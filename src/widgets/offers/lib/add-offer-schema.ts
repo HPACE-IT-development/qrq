@@ -9,7 +9,7 @@ export function useOfferForm(): {
   const schema = toTypedSchema(
     z
       .object({
-        supplier: z.string({ required_error: 'Введите поставщика' }),
+        // supplier: z.string({ required_error: 'Введите поставщика' }),
         name: z.string({ required_error: 'Введите наименование' }),
         amount: z
           .number({

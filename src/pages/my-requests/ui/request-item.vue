@@ -38,9 +38,12 @@
 
     handleRequestClicked(item);
   };
-  const handleClickOnChange = (item: BidWithName) => {
+  const handleClickOnChangeBrand = (item: BidWithName) => {
     handleEditRequest(item);
     changeViewMode('selectBrand');
+  };
+  const handleClickOnChange = (item: BidWithName) => {
+
   };
 </script>
 
@@ -79,6 +82,12 @@
                 variant="ghost"
                 class="flex h-full w-full px-4 py-2 text-start hover:bg-[#F9FAFB]">
                 <p class="w-full text-[14px] font-semibold">История заявки</p>
+              </Button>
+              <Button
+                variant="ghost"
+                @click="handleClickOnChangeBrand(item)"
+                class="flex h-full w-full px-4 py-2 text-start hover:bg-[#F9FAFB]">
+                <p class="w-full text-[14px] font-semibold">Выбор бренда</p>
               </Button>
               <Button
                 variant="ghost"

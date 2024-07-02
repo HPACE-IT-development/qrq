@@ -5,20 +5,28 @@
   import { ProductCard } from '@/pages/home';
   import { MyInterests, AddedInterest } from '@/pages/my-interests'
   import { Header } from '@/widgets/header';
+  import { ManuallyAddOffer, AddOffer, Offers } from '@/widgets/offers';
   import { Filter } from '@/features/filter';
-  import { Auth } from '@/widgets/auth';
-  import { ManuallyAddOffer, Offers } from '@/widgets/offers';
+  import { Auth, authFormOpened } from '@/widgets/auth';
   import { CreateAdvertisement } from '@/features/create-advertisement';
   import type { Item } from '@/shared/api/generated/Api';
   import { Sidebar } from '@/widgets/sidebar';
-
-  import { useUnit } from 'effector-vue/composition';
-  import { $showAddOfferModal } from '@/widgets/offers/model/offers-model';
   import { RequestHistory, SelectBrand } from '@/pages/my-requests';
   import {
     $requestViewMode,
     requestViewModeChanged,
   } from '@/pages/my-requests/model/my-requests-model';
+  import {
+    ChangeCompany,
+    changeCompanyVisibleChanged,
+  } from '@/widgets/change-company';
+  import {
+    changeOffersVisibleChanged,
+  } from '@/widgets/my-suggestions';
+  import { $showAddOffer, $showAddManuallyOffer } from '@/widgets/offers/model/offers-model';
+  import { useUnit } from 'effector-vue/composition';
+  import NotFoundPage from '@/pages/not-found/ui/not-found-page.vue';
+  import MySuggestions from '@/widgets/my-suggestions/ui/my-suggestions.vue';
   import { searchQuery } from '@/entities/offer';
   import { $selectedAdvertisement } from '@/entities/advertisement';
   import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
@@ -28,11 +36,14 @@
   const route = useRoute();
   const router = useRouter();
 
-  const showAddOfferModal = useUnit($showAddOfferModal);
+  const showAddManuallyOffer = useUnit($showAddManuallyOffer);
+  const showAddOffer = useUnit($showAddOffer);
   const requestViewMode = useUnit($requestViewMode);
   const selectedAdvertisement = useUnit($selectedAdvertisement);
+  const changeSwitchCompanyVisible = useUnit(changeCompanyVisibleChanged);
+  const changeSwitchOffersVisible = useUnit(changeOffersVisibleChanged);
   const selectedVendor = useUnit($selectedVendor);
-
+  const openAuthForm = useUnit(authFormOpened);
   const changeRequestViewMode = useUnit(requestViewModeChanged);
 
   const { start: search } = useUnit(searchQuery);
@@ -102,7 +113,7 @@
 
   const isMobile = ref(false);
   const isAuthOpen = ref(false);
-
+  const isMySuggestionsOpen = ref(false);
   const checkIsMobile = () => {
     isMobile.value = window.innerWidth < 640;
   };
@@ -144,6 +155,9 @@
 
   function handleNavigate(destination: string) {
     if (destination === 'add-company') {
+      handleAddCompany();
+    } else if (destination === 'my-suggestions') {
+      changeSwitchOffersVisible(true);
       isCompanyOpen.value = true;
     } else if (destination === 'my-requests') {
       router.push('/');
@@ -152,6 +166,8 @@
       router.push('/');
       isSidebarOpen.value = false;
       isInterestsCardOpen.value = true;
+    } else if (destination === 'change-company') {
+      changeSwitchCompanyVisible(true);
     } else {
       router.push('/');
       isSidebarOpen.value = false;
@@ -199,12 +215,24 @@
     isFilterByVendor.value = true;
     isFilterCardOpen.value = true;
   }
+    function handleAddCompany() {
+      isAuthOpen.value = true;
+      openAuthForm('company');
+    }
+  function handleOpenMySuggestions() {
+    isMySuggestionsOpen.value = true;
+  }
+
+  const isErrorPage = ref<boolean>(false);
+
+  watch(route, (newRoute) => {
+    isErrorPage.value = newRoute.name === 'NotFound';
+  });
 </script>
 
 <template>
-  <div class="flex flex-row bg-white">
-    <div
-      class="flex max-h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
+  <div class="flex flex-row bg-white" v-if='!isErrorPage'>
+    <div class="flex h-[100vh] w-full flex-col items-center sm:max-w-[356px]">
       <Header
         v-if="
           isMobile &&
@@ -276,9 +304,11 @@
       <Auth v-if="isAuthOpen" @submit-close-auth="isAuthOpen = false" />
 
       <Sidebar
-        v-if="isSidebarOpen && !isCompanyOpen"
+        v-if="isSidebarOpen && !isAuthOpen"
         @close-sidebar="isSidebarOpen = false"
         @navigate="handleNavigate" />
+      <ChangeCompany />
+      <my-suggestions />
       <CreateAdvertisement
         v-if="isCreateAdvertisementOpen"
         @close="isCreateAdvertisementOpen = false" />
@@ -319,6 +349,15 @@
         @close-product-card="handleCloseProductCard"
         class="hidden sm:flex lg:hidden" />
 
+      <ManuallyAddOffer
+        v-if="
+          showAddManuallyOffer &&
+          !showAddOffer &&
+          !isMobile &&
+          route.path === '/advertisements' &&
+          !isProductCardOpen &&
+          !isFilterCardOpen
+        " />
 <!--      <ManuallyAddOffer-->
 <!--        v-if="-->
 <!--          showAddOfferModal &&-->
@@ -334,25 +373,21 @@
       <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
-      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddOfferModal && !isInterestsCardOpen && !isAddedInterestCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
+      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddManuallyOffer && !showAddOffer && !isInterestsCardOpen && !isAddedInterestCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
       class="hidden h-screen w-full min-w-[360px] flex-col justify-between border-l border-[#D0D4DB] bg-[#F9FAFB] sm:w-[360px] lg:flex"></div>
     <ProductCard
-      v-if="productItem && !isMobile && !showAddOfferModal"
+      v-if="productItem && !isMobile && !showAddManuallyOffer && !showAddOffer"
       :product-item="productItem"
       :is-product-card-open="isProductCardOpen"
       @close-product-card="handleCloseProductCard"
       class="flex w-full sm:hidden lg:flex" />
-    <ManuallyAddOffer
-      v-if="
-          showAddOfferModal &&
-          !isMobile &&
-          route.path === '/advertisements' &&
-          !isProductCardOpen &&
-          !isFilterCardOpen
-        " />
+
+    <ManuallyAddOffer v-if="!isMobile && showAddManuallyOffer && !showAddOffer" />
+    <AddOffer v-if="!isMobile && showAddOffer && !showAddManuallyOffer" />
+
 <!--    <ManuallyAddOffer v-if="!isMobile && showAddOfferModal" />-->
     <Filter
-      v-if="!isMobile && !showAddOfferModal"
+      v-if="!isMobile && !showAddManuallyOffer && !showAddOffer"
       :is-filter-card-open="isFilterCardOpen"
       :is-filter-by-vendor="isFilterByVendor"
       :filter-interests="filterInterests"
@@ -381,6 +416,9 @@
       @close-card="isVendorCredentialsCardOpen=false"
       @open-filter-by-vendor="handleOpenFilterByVendor"/>
   </div>
+  <not-found-page
+    v-else
+    class="inline-block w-full" />
   <Filter
     v-if="isMobile"
     :is-filter-card-open="isFilterCardOpen"

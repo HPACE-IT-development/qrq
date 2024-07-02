@@ -19,7 +19,8 @@
     'logout',
     'add-company',
     'my-requests',
-    'my-interest'
+    'my-interest',
+    'my-suggestions'
   ]);
 
   const sidebarItems = reactive<IButtonMobile[]>([
@@ -37,6 +38,11 @@
       label: 'Мои интересы',
       icon: markRaw(MyInterestsIcon),
       action: () => emit('navigate', 'my-interests'),
+    },
+    {
+      label: 'Мои предложения',
+      icon: markRaw(myOffersIcon),
+      action: () => emit('navigate', 'my-suggestions'),
     },
     {
       label: 'Переключить аккаунт',

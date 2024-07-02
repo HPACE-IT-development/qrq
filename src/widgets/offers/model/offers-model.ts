@@ -1,11 +1,10 @@
-import { createEvent, createStore, sample } from 'effector';
+import { createEvent, createEffect, createStore, sample } from 'effector';
 import { not } from 'patronum';
 import { createMutation } from '@farfetched/core';
-import type { Confirmation } from '@/shared/api/generated/Api';
+import type { Confirmation, Offer } from '@/shared/api/generated/Api';
 import { $api } from '@/shared/api';
-
+import { offersQuery } from '@/widgets/my-suggestions';
 interface FormValues {
-  supplier: string;
   name: string;
   amount: number;
   deliveryFrom?: number | undefined;
@@ -18,27 +17,42 @@ export const createOfferMutation = createMutation({
   handler: (data: Confirmation) => $api.confirmations.createConfirmation(data),
 });
 
+export const createOfferFx = createEffect(async (data: Offer) => {
+  return $api.offers.createOffer(data);
+});
+
+export const manuallyOfferAddButtonClicked = createEvent();
 export const offerAddButtonClicked = createEvent();
 export const formSubmitted = createEvent<FormValues>();
 
-export const $showAddOfferModal = createStore(false);
+export const $showAddManuallyOffer = createStore(false);
+export const $showAddOffer = createStore(false);
 
+sample({
+  clock: manuallyOfferAddButtonClicked,
+  source: not($showAddManuallyOffer),
+  target: $showAddManuallyOffer,
+});
 sample({
   clock: offerAddButtonClicked,
-  source: not($showAddOfferModal),
-  target: $showAddOfferModal,
+  source: not($showAddOffer),
+  target: $showAddOffer,
 });
-
 sample({
   clock: formSubmitted,
-  fn: (clk) =>
-    ({
-      name: clk.name,
-      article: clk.article,
-      price: 0,
-      amount: clk.amount,
-      category: clk.purpose,
-      delivery_time: clk.deliveryTo,
-    }) as Confirmation,
+  fn: (clk) => ({
+    name: clk.name,
+    article: clk.article,
+    price: 0,
+    amount: clk.amount,
+    category: clk.purpose,
+    delivery_time: clk.deliveryTo,
+  }) as Confirmation,
   target: createOfferMutation.start,
 });
+sample({
+  clock: createOfferMutation.finished.success,
+  target: offersQuery.start,
+});
+ // @ts-ignore
+formSubmitted.watch(createOfferFx);
