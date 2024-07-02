@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { Item } from '@/shared/api/generated/Api';
-  import { Button } from '@/shared/ui/button';
   import { cn } from '@/shared/lib';
   import { useRoute } from 'vue-router';
 
@@ -8,14 +7,19 @@
     offersItems: Item[];
   }>();
 
-  const emit = defineEmits(['offerClicked']);
+  const emit = defineEmits(['offerClicked', 'vendorClicked']);
 
   const route = useRoute();
+
   const handleItemClick = (item: Item) => {
     if (!item) {
       return;
     }
     emit('offerClicked', item);
+  };
+
+  const handleVendorClick = (vendorTitle: string) => {
+    emit('vendorClicked', vendorTitle);
   };
 </script>
 
@@ -34,9 +38,6 @@
     <div class="flex w-full flex-col">
       <div class="flex w-full flex-row items-center justify-between">
         <h3 class="text-[14px] font-medium text-[#101828]">{{ item.title }}</h3>
-        <Button size="icon" variant="ghost" class="h-[24px] w-[24px]">
-          <img src="../assets/extensionIcon.svg" alt="extensionIcon" />
-        </Button>
       </div>
       <h3
         v-if="item.price"
@@ -56,7 +57,7 @@
             : 'Не указано'
         }}
       </p>
-      <p class="text-[14px] font-normal text-[#667085]">
+      <p class="text-[14px] font-normal text-[#667085]" @click.stop="handleVendorClick(item.vendorTitle)">
         {{ item.vendorTitle ? item.vendorTitle : 'Не указано' }}
       </p>
       <p class="text-[14px] font-normal text-[#101828]">

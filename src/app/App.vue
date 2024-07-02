@@ -31,6 +31,7 @@
   import { $selectedAdvertisement } from '@/entities/advertisement';
   import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
   import VendorInfoCard from "@/pages/vendor/ui/vendor-info-card.vue";
+  import UserInfoCard from "@/pages/user/ui/user-info-card.vue";
   import VendorCredentialsCard from "@/pages/vendor/ui/vendor-credentials-card.vue";
 
   const route = useRoute();
@@ -95,7 +96,9 @@
   const filterInterests = ref(false);
   const isVendorInfoCardOpen = ref(false);
   const isVendorCredentialsCardOpen = ref(false);
+  const isUserInfoCardOpen = ref(false);
   const isFilterByVendor = ref(false);
+  const isFilterByUser = ref(false);
 
   watch([isProductCardOpen, isFilterCardOpen], () => {
     if (isProductCardOpen.value && isFilterCardOpen.value) {
@@ -178,6 +181,7 @@
     changeRequestViewMode(null);
   }
   function handleOpenFilter() {
+    isFilterByUser.value = false;
     isFilterByVendor.value = false;
     isInterestsCardOpen.value = false;
     isAddedInterestCardOpen.value = false;
@@ -186,6 +190,7 @@
   function handleCloseFilter() {
     isFilterCardOpen.value = false;
     isInterestsCardOpen.value = false;
+    isFilterByUser.value = false;
     isFilterByVendor.value = false;
     filterInterests.value = false;
   }
@@ -194,6 +199,7 @@
     isAddedInterestCardOpen.value = true;
   }
   function changeInterestView() {
+    isFilterByUser.value = false;
     isFilterByVendor.value = false;
     isInterestsCardOpen.value = false;
     filterInterests.value = true;
@@ -208,11 +214,20 @@
       isInterestsCardOpen.value = true;
     }
   }
+  const selectedVendorTitle = ref('');
 
+  const handleVendorClick = (vendorTitle: string) => {
+    selectedVendorTitle.value = vendorTitle;
+    isUserInfoCardOpen.value = true;
+  };
   function handleOpenFilterByVendor() {
     isVendorInfoCardOpen.value = false;
     isVendorCredentialsCardOpen.value = false;
     isFilterByVendor.value = true;
+    isFilterCardOpen.value = true;
+  }
+  function handleOpenFilterByUser() {
+    isUserInfoCardOpen.value = false;
     isFilterCardOpen.value = true;
   }
     function handleAddCompany() {
@@ -267,9 +282,10 @@
       </div>
       <div
         class="w-full flex-grow bg-[#F9FAFB]"
-        v-if="isMobile && !isProductCardOpen && !isFilterCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen">
+        v-if="isMobile && !isProductCardOpen && !isFilterCardOpen && !isUserInfoCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen">
         <Offers
           @close-offers="handleCloseOffers"
+          @vendor-clicked="handleVendorClick"
           v-if="
             requestViewMode === 'offers' &&
             !isFilterCardOpen &&
@@ -321,6 +337,7 @@
       <div class="flex w-full min-w-full lg:hidden">
         <Offers
           @close-offers="handleCloseOffers"
+          @vendor-clicked="handleVendorClick"
           v-if="
             requestViewMode === 'offers' &&
             !isFilterCardOpen &&
@@ -335,6 +352,7 @@
       <div class="hidden w-full min-w-full lg:flex">
         <Offers
           @close-offers="handleCloseOffers"
+          @vendor-clicked="handleVendorClick"
           v-if="requestViewMode === 'offers'"
           @offer-clicked="handleItemClick"
           @open-filter="handleOpenFilter()"
@@ -373,7 +391,7 @@
       <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
-      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddManuallyOffer && !showAddOffer && !isInterestsCardOpen && !isAddedInterestCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
+      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddManuallyOffer && !showAddOffer && !isInterestsCardOpen && !isAddedInterestCardOpen && !isUserInfoCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
       class="hidden h-screen w-full min-w-[360px] flex-col justify-between border-l border-[#D0D4DB] bg-[#F9FAFB] sm:w-[360px] lg:flex"></div>
     <ProductCard
       v-if="productItem && !isMobile && !showAddManuallyOffer && !showAddOffer"
@@ -390,6 +408,7 @@
       v-if="!isMobile && !showAddManuallyOffer && !showAddOffer"
       :is-filter-card-open="isFilterCardOpen"
       :is-filter-by-vendor="isFilterByVendor"
+      :is-filter-by-user="isFilterByUser"
       :filter-interests="filterInterests"
       @close-filter-card="handleCloseFilter"
       @close-filter-card-after-add-interest="handleCloseFilterAfterAddInterest"
@@ -411,9 +430,14 @@
       @close-vendor-info-card="isVendorInfoCardOpen = false"
       @open-vendor-credentials-card="isVendorCredentialsCardOpen = true"
     />
+    <UserInfoCard
+      v-if="!isMobile && isUserInfoCardOpen"
+      :vendor-title="selectedVendorTitle"
+      @close-user-info-card="isUserInfoCardOpen = false"
+      @open-filter-by-user="handleOpenFilterByUser"/>
     <VendorCredentialsCard
       v-if="!isMobile && isVendorCredentialsCardOpen"
-      @close-card="isVendorCredentialsCardOpen=false"
+      @close-card="isVendorCredentialsCardOpen = false"
       @open-filter-by-vendor="handleOpenFilterByVendor"/>
   </div>
   <not-found-page
@@ -424,6 +448,7 @@
     :is-filter-card-open="isFilterCardOpen"
     :filter-interests="filterInterests"
     :is-filter-by-vendor="isFilterByVendor"
+    :is-filter-by-user="isFilterByUser"
     @close-filter-card="handleCloseFilter"
     @close-filter-card-after-add-interest="handleCloseFilterAfterAddInterest"
     @close-filter-by-interests="closeFilterByInterests"

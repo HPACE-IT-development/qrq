@@ -13,7 +13,6 @@
 
   const handleSelected = useUnit(advertisementClicked);
   const selectedItem = useUnit($selectedAdvertisementId);
-
   const handleCardClick = (item: PreSearchResponse) => {
     if (!item) return;
 

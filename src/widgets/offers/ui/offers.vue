@@ -16,6 +16,7 @@
   import { offerAddButtonClicked } from '@/widgets/offers';
   import { useUnit } from 'effector-vue/composition';
   import { Plus } from 'lucide-vue-next';
+  import { manuallyOfferAddButtonClicked } from '@/widgets/offers/model/offers-model';
 
   defineProps<{ class: string }>();
 
@@ -23,7 +24,7 @@
   const page = ref(1);
 
   const filterValues = useUnit($filterValues);
-  const handleAddOffer = useUnit(offerAddButtonClicked);
+  const handleAddManuallyOffer = useUnit(manuallyOfferAddButtonClicked);
 
   function getAnnouncementText(count: number) {
     if (count === 0 || !count) {
@@ -48,8 +49,11 @@
     'open-filter',
     'page-selected',
     'closeOffers',
+    'vendorClicked'
   ]);
-
+  const handleVendorClick = (vendorTitle: string) => {
+    emit('vendorClicked', vendorTitle);
+  };
   const { data } = useUnit(searchQuery);
 
   const handleItemClick = (item: Item) => {
@@ -105,7 +109,7 @@
                 getAnnouncementText(data?.data?.items_count ?? 0) !==
                   'Нет предложений' || filterValues
               "
-              @click="handleAddOffer()"
+              @click="handleAddManuallyOffer()"
               size="icon"
               variant="ghost">
               <Plus class="h-7 w-7" color="#0017FC" />
@@ -120,7 +124,8 @@
       class="flex max-h-[calc(100vh-72px)] flex-col gap-y-4 px-4 max-sm:max-h-[calc(100vh-201px)]">
       <OfferList
         :offers-items="data?.data?.items as any"
-        @offer-clicked="handleItemClick" />
+        @offer-clicked="handleItemClick"
+        @vendor-clicked="handleVendorClick" />
       <div class="mx-auto flex w-fit bg-[#F9FAFB] py-2">
         <Pagination
           v-if="!!data?.data?.pages"

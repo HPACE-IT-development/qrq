@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { cn } from '@/shared/lib';
   import { useUnit } from 'effector-vue/composition';
-  import { $selectedVendorId, vendorClicked, getVendors, $filteredVendors } from "@/entities/vendors/model/vendors-model";
   import { $searchTerm } from "@/widgets/header/model/header-modal";
   import { PreSearchResponse, Vendor } from '@/shared/api/generated/Api';
   import { onMounted, watch } from 'vue';
@@ -10,57 +9,45 @@
     searchResult: Readonly<PreSearchResponse[]>;
   }>();
 
-  const handleSelected = useUnit(vendorClicked);
-  const selectedVendor = useUnit($selectedVendorId);
-  const searchValue = useUnit($searchTerm);
-  const vendorsList = useUnit($filteredVendors);
 
-  onMounted(() => {
-    getVendors.start();
-  });
-
-  watch(searchValue, (newVal) => {
-    getVendors.start();
-  });
-
-  function handleVendorClick(item) {
+  function handleUserClick(item) {
     if (!item) return;
     handleSelected({...item, article: searchValue.value});
   }
 
-  function getVendorText(count: number) {
+  function getUsersText(count: number) {
     if (count === 0 || !count) {
-      return 'Нет поставщиков';
+      return 'Нет пользователей';
     } else if (count === 1) {
-      return 'Найден 1 поставщик';
+      return 'Найден 1 пользователь';
     } else if (count % 10 === 1 && count !== 11) {
-      return `Найден ${count} поставщик`;
+      return `Найден ${count} пользователь`;
     } else if (
       count % 10 >= 2 &&
       count % 10 <= 4 &&
       (count < 10 || count >= 20)
     ) {
-      return `Найдено ${count} поставщика`;
+      return `Найдено ${count} пользователя`;
     } else {
-      return `Найдено ${count} поставщиков`;
+      return `Найдено ${count} пользователей`;
     }
   }
 </script>
 
 <template>
-  <div v-if="vendorsList && vendorsList.length > 0" class="broder-r w-full border">
+  <div v-if="usersList && usersList.length > 0" class="broder-r w-full border">
     <div
-      class="flex items-center justify-between border-b border-r border-[#D0D4DB] p-4 pr-5" v-if="vendorsList && vendorsList.length > 0">
+      class="flex items-center justify-between border-b border-r border-[#D0D4DB] p-4 pr-5" v-if="usersList && usersList.length > 0">
       <h3
         class="text-[18px] font-semibold">
-        {{ getVendorText(vendorsList.length ?? 0) }}
+        {{ getUsersText(usersList.length ?? 0) }}
       </h3>
     </div>
     <div
       class="mx-auto flex w-full flex-col items-center justify-center gap-y-6 p-4">
       <DynamicScroller
         class="flex w-full max-w-[324px] flex-col gap-y-4 max-sm:w-[100vw]"
-        :items="vendorsList"
+        :items="usersList"
         :min-item-size="91">
         <template v-slot="{ item, index, active }">
           <DynamicScrollerItem
@@ -70,12 +57,12 @@
             :data-index="index">
             <div class="py-2">
               <div
-                @click="handleVendorClick(item)"
+                @click="handleUserClick(item)"
                 :key="item.id"
                 :class="
                   cn(
                     'flex w-full flex-col items-start justify-between rounded-lg border-2 bg-white p-4 pr-5 duration-200 hover:border-[#0017FC] hover:bg-[#1778EA] hover:bg-opacity-10',
-                    selectedVendor === item.id &&
+                    selectedUser === item.id &&
                       'border-[#0017FC] bg-[#1778EA] bg-opacity-10',
                   )
                 ">
