@@ -15,6 +15,7 @@ import {useUnit} from "effector-vue/composition";
 import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
 import {ref} from "vue";
 import {createAccountQuery, useVendorCredentialsForm} from "@/pages/vendor/model/vendor-credentials-model";
+import { createInterestQuery } from '@/pages/my-interests/model/interests-page-model';
 
 const emit = defineEmits(['close-card', 'open-filter-by-vendor']);
 const {form} = useVendorCredentialsForm();
@@ -37,8 +38,11 @@ const onSubmit = async () => {
       password: pass,
       is_active: vendor.is_active
     });
-
-    emit('open-filter-by-vendor')
+    createInterestQuery.start({
+      vendor: vendor.title,
+      description: vendor.title,
+    });
+    // emit('open-filter-by-vendor')
   }
 }
 
