@@ -32,7 +32,6 @@
   import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
   import VendorInfoCard from "@/pages/vendor/ui/vendor-info-card.vue";
   import VendorCredentialsCard from "@/pages/vendor/ui/vendor-credentials-card.vue";
-  import NotFoundPage from '@/pages/not-found/ui/not-found-page.vue';
 
   const route = useRoute();
   const router = useRouter();

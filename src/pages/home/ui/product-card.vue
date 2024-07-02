@@ -267,62 +267,11 @@
       <Purchased v-else class='pt-24' />
     </div>
     <div v-if='step < 4 && !isPurchased' class="flex flex-col gap-2.5 inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4">
+      <Button class="w-full text-[17px] font-semibold" @click="handleAddOffer()">Дать предложение</Button>
       <Button variant="tertiary" class="w-full text-[17px] font-semibold">Показать телефон</Button>
       <Button class="w-full text-[17px] font-semibold" @click="handleBuyClick">
         {{ step === 1 ? 'Купить' : 'Далее' }}
       </Button>
-        <div class="flex w-full flex-col gap-y-2 font-normal text-[#858FA3]">
-          <div v-if="productItem.brand" class="flex flex-row justify-between">
-            <p>Бренд</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.brand }}
-            </p>
-          </div>
-          <div v-if="productItem.article" class="flex flex-row justify-between">
-            <p>Артикул</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.article }}
-            </p>
-          </div>
-          <div
-            v-if="productItem.quantity"
-            class="flex flex-row justify-between">
-            <p>Количество</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.quantity.formatted }}
-            </p>
-          </div>
-          <div
-            v-if="productItem.vendorTitle"
-            class="flex flex-row justify-between">
-            <p>Поставщик</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.vendorTitle }}
-            </p>
-          </div>
-          <div
-            v-if="productItem.warehouse"
-            class="flex flex-row justify-between">
-            <p>Местоположение</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.warehouse }}
-            </p>
-          </div>
-          <div
-            v-if="productItem.parsedDelivery"
-            class="flex flex-row justify-between">
-            <p>Срок поставки</p>
-            <p class="font-normal text-[#101828] [&>p]:text-end">
-              {{ productItem.parsedDelivery }} дн.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
-
-    <div class="inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4 flex flex-col gap-4">
-      <Button variant='tertiary' class="w-full text-[17px] font-semibold">Показать телефон</Button>
-      <Button class="w-full text-[17px] font-semibold" @click="handleAddOffer()">Дать предложение</Button>
-    </div>
-  </div>
 </template>
