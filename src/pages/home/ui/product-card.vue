@@ -10,7 +10,7 @@
   } from '@/shared/ui/carousel';
   import { computed, ref, watch } from 'vue';
   import { watchOnce } from '@vueuse/core';
-  import type { Item } from '@/shared/api/generated/Api';
+  import type { Item, Order } from '@/shared/api/generated/Api';
   import { useRoute, useRouter } from 'vue-router';
   import { useUnit } from 'effector-vue/composition';
   import { offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
@@ -28,6 +28,7 @@
   import { cn } from '@/shared/lib';
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
   import { ScrollArea } from '@/shared/ui/scroll-area';
+  import { createOrderFx } from '@/widgets/offers/model/offers-model';
 
   const api = ref<CarouselApi>();
   const totalCount = ref(0);
@@ -83,11 +84,7 @@
       showDetails.value = true;
       step.value = 3;
     } else if (step.value === 3) {
-      console.log('done');
-      showDetails.value = false;
-      step.value = 4;
-      quantity.value = 1;
-      purchasedItems.value.set(props.productItem.itemId!, true);
+      handleOrderCreation();
     }
   }
 
@@ -107,6 +104,33 @@
     if (!props.productItem || !props.productItem.itemId) return false;
     return purchasedItems.value.get(props.productItem.itemId) || false;
   });
+  const error = ref<string | null>(null);
+
+  function handleOrderCreation() {
+    if (!props.productItem) return;
+
+    const order: Order = {
+      name: props.productItem.title,
+      amount: quantity.value,
+      price: props.productItem.price?.value || 0,
+      delivery_time: props.productItem.parsedDelivery,
+      company: 0,
+      bid: 0,
+      offer: parseInt(props.productItem.itemId),
+      description: "Order created from offer",
+    };
+
+    createOrderFx(order)
+      .then((response) => {
+        console.log('Order created successfully:', response);
+        step.value = 4;
+        error.value = null;
+      })
+      .catch((error) => {
+        console.error('Error creating order:', error);
+        error.value = 'Ошибка при создании заказа. Пожалуйста, попробуйте снова.';
+      });
+  }
 </script>
 
 <template>
@@ -264,13 +288,16 @@
           </div>
         </div>
       </ScrollArea>
-      <Purchased v-else class='pt-24' />
+      <Purchased v-else-if='step === 4' class='pt-24' />
+      <div v-if="error">
+        <p class="text-red-500">{{ error }}</p>
+      </div>
     </div>
     <div v-if='step < 4 && !isPurchased' class="flex flex-col gap-2.5 inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4">
       <Button class="w-full text-[17px] font-semibold" @click="handleAddOffer()">Дать предложение</Button>
       <Button variant="tertiary" class="w-full text-[17px] font-semibold">Показать телефон</Button>
       <Button class="w-full text-[17px] font-semibold" @click="handleBuyClick">
-        {{ step === 1 ? 'Купить' : 'Далее' }}
+        {{ step === 1 ? 'Купить' : step === 3 ? 'Подтвердить заказ' : 'Далее' }}
       </Button>
       </div>
     </div>

@@ -31,7 +31,6 @@
   import { $selectedAdvertisement } from '@/entities/advertisement';
   import {$selectedVendor} from "@/entities/vendors/model/vendors-model";
   import VendorInfoCard from "@/pages/vendor/ui/vendor-info-card.vue";
-  import UserInfoCard from "@/pages/user/ui/user-info-card.vue";
   import VendorCredentialsCard from "@/pages/vendor/ui/vendor-credentials-card.vue";
 
   const route = useRoute();
@@ -96,7 +95,6 @@
   const filterInterests = ref(false);
   const isVendorInfoCardOpen = ref(false);
   const isVendorCredentialsCardOpen = ref(false);
-  const isUserInfoCardOpen = ref(false);
   const isFilterByVendor = ref(false);
   const isFilterByUser = ref(false);
 
@@ -218,7 +216,6 @@
 
   const handleVendorClick = (vendorTitle: string) => {
     selectedVendorTitle.value = vendorTitle;
-    isUserInfoCardOpen.value = true;
   };
   function handleOpenFilterByVendor() {
     isVendorInfoCardOpen.value = false;
@@ -227,7 +224,6 @@
     isFilterCardOpen.value = true;
   }
   function handleOpenFilterByUser() {
-    isUserInfoCardOpen.value = false;
     isFilterCardOpen.value = true;
   }
     function handleAddCompany() {
@@ -282,7 +278,7 @@
       </div>
       <div
         class="w-full flex-grow bg-[#F9FAFB]"
-        v-if="isMobile && !isProductCardOpen && !isFilterCardOpen && !isUserInfoCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen">
+        v-if="isMobile && !isProductCardOpen && !isFilterCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen">
         <Offers
           @close-offers="handleCloseOffers"
           @vendor-clicked="handleVendorClick"
@@ -391,7 +387,7 @@
       <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
-      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddManuallyOffer && !showAddOffer && !isInterestsCardOpen && !isAddedInterestCardOpen && !isUserInfoCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
+      v-if="!isFilterCardOpen && !isProductCardOpen && !showAddManuallyOffer && !showAddOffer && !isInterestsCardOpen && !isAddedInterestCardOpen && !isVendorInfoCardOpen && !isVendorCredentialsCardOpen"
       class="hidden h-screen w-full min-w-[360px] flex-col justify-between border-l border-[#D0D4DB] bg-[#F9FAFB] sm:w-[360px] lg:flex"></div>
     <ProductCard
       v-if="productItem && !isMobile && !showAddManuallyOffer && !showAddOffer"
@@ -430,11 +426,6 @@
       @close-vendor-info-card="isVendorInfoCardOpen = false"
       @open-vendor-credentials-card="isVendorCredentialsCardOpen = true"
     />
-    <UserInfoCard
-      v-if="!isMobile && isUserInfoCardOpen"
-      :vendor-title="selectedVendorTitle"
-      @close-user-info-card="isUserInfoCardOpen = false"
-      @open-filter-by-user="handleOpenFilterByUser"/>
     <VendorCredentialsCard
       v-if="!isMobile && isVendorCredentialsCardOpen"
       @close-card="isVendorCredentialsCardOpen = false"

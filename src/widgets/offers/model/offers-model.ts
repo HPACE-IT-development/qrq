@@ -1,7 +1,7 @@
 import { createEvent, createEffect, createStore, sample } from 'effector';
 import { not } from 'patronum';
 import { createMutation } from '@farfetched/core';
-import type { Confirmation, Offer } from '@/shared/api/generated/Api';
+import type { Confirmation, Offer, Order } from '@/shared/api/generated/Api';
 import { $api } from '@/shared/api';
 import { offersQuery } from '@/widgets/my-suggestions';
 interface FormValues {
@@ -20,7 +20,9 @@ export const createOfferMutation = createMutation({
 export const createOfferFx = createEffect(async (data: Offer) => {
   return $api.offers.createOffer(data);
 });
-
+export const createOrderFx = createEffect(async (order: Order) => {
+  return $api.orders.createOrder(order);
+});
 export const manuallyOfferAddButtonClicked = createEvent();
 export const offerAddButtonClicked = createEvent();
 export const formSubmitted = createEvent<FormValues>();

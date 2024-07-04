@@ -42,7 +42,7 @@ const onSubmit = async () => {
       vendor: vendor.title,
       description: vendor.title,
     });
-    // emit('open-filter-by-vendor')
+    emit('close-card');
   }
 }
 
