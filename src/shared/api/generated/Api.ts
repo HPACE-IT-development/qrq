@@ -88,7 +88,7 @@ export interface AccessToken {
 }
 
 export interface Company {
-  id?: string;
+  id: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -111,7 +111,7 @@ export interface Brand {
 export type Brands = Brand[];
 
 export interface Destination {
-  id?: string;
+  id?: number;
   name?: string;
 }
 
@@ -266,7 +266,7 @@ export interface Confirmation {
 export type Confirmations = Confirmation[];
 
 export interface Order {
-  id?: string;
+  id?: number;
   /**
    * @format date-time
    * @example "2024-04-14T08:12:44.533679Z"
@@ -290,6 +290,7 @@ export interface Order {
   bid?: number;
   /** offer_id */
   offer?: number;
+  city?: string;
 }
 
 export type Orders = Order[];
@@ -457,7 +458,7 @@ export interface SearchResponse extends SearchPagination {
 }
 
 export interface Vendor {
-  id?: string;
+  id?: number;
   title?: string;
   site?: string;
   buskerUri?: string;
@@ -2240,6 +2241,25 @@ export class Api<
     getVendors: (params: RequestParams = {}) =>
       this.request<Vendors, Error>({
         path: `/vendors`,
+        method: 'GET',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+  };
+  accounts = {
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name GetAccounts
+     * @summary метод получения списка аккаунтов
+     * @request POST:/vendors
+     * @secure
+     */
+    getAccounts: (params: RequestParams = {}) =>
+      this.request<Vendors, Error>({
+        path: `/accounts`,
         method: 'GET',
         secure: true,
         format: 'json',

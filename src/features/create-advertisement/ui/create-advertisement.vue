@@ -1,13 +1,5 @@
 <script setup lang="ts">
-  import {
-    Button,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    Input,
-  } from '@/shared/ui';
+  import { Button, FormControl, FormField, FormItem, FormLabel, FormMessage, Input } from '@/shared/ui';
   import { ChevronDown, X } from 'lucide-vue-next';
   import { useGate, useStore, useUnit } from 'effector-vue/composition';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
@@ -20,7 +12,9 @@
     createAdvertisementMounted,
     findNomenclatures,
     formClosed,
-    formSubmitted, getBrands, getCategories,
+    formSubmitted,
+    getBrands,
+    getCategories,
     getDestinations,
     getNomenclatures,
     names,
@@ -33,8 +27,8 @@
     ListboxButton,
     ListboxOption,
     ListboxOptions,
-    TransitionRoot,
     TransitionChild,
+    TransitionRoot,
   } from '@headlessui/vue';
   import { cn } from '@/shared/lib';
   import { ScrollArea } from '@/shared/ui/scroll-area';
@@ -45,7 +39,7 @@
     advertisementTypeSelected: handleSelectedType,
     $formMode: formMode,
     nomenclatureTypeSelected: handleNomenclatureType,
-    findNomenclatures: handleFindNomenclatures
+    findNomenclatures: handleFindNomenclatures,
   } =
     useUnit({
       advertisementTypeSelected,
@@ -55,17 +49,18 @@
     });
 
   const advertisementType = useUnit($advertisementType);
-  const { data: destinationsArray } = useUnit(getDestinations)
+  const { data: destinationsArray } = useUnit(getDestinations);
+
   const { data: categories } = useUnit(getCategories);
   const { data: brands } = useUnit(getBrands);
 
-  useGate(nomenclaturesGate)
-  const loading = useStore(getNomenclatures.$pending)
+  useGate(nomenclaturesGate);
+  const loading = useStore(getNomenclatures.$pending);
 
   const { form, article, name, destinations, category, brand } = useCreateAdvertisementForm(
     advertisementType.value,
   );
-  const type = ref("find");
+  const type = ref('find');
   const countOfChanges = ref(0);
 
   const onSubmit = async () => {
@@ -76,18 +71,18 @@
   };
 
   const updateNomenclature = async () => {
-    handleNomenclatureType('update')
+    handleNomenclatureType('update');
     // @ts-ignore
     formSubmitted({
       name: name.value,
       article: article.value,
       destinations: destinations.value,
-      ...form.values
-    })
+      ...form.values,
+    });
 
     popoverOpened.value = false;
-    handleClose()
-  }
+    handleClose();
+  };
 
   const createNomenclature = async () => {
     handleNomenclatureType('create');
@@ -96,67 +91,68 @@
       name: name.value,
       article: article.value,
       destinations: destinations.value,
-      ...form.values
-    })
+      ...form.values,
+    });
 
     popoverOpened.value = false;
-    handleClose()
-  }
+    handleClose();
+  };
 
   function handleClose() {
     emit('close');
     formClosed();
   }
+
   const popoverOpened = ref(false);
 
   const publishRequest = async () => {
-    if (type.value === 'create') handleNomenclatureType('create')
-    await onSubmit()
+    if (type.value === 'create') handleNomenclatureType('create');
+    await onSubmit();
     emit('close');
-  }
+  };
 
   const selectData = (data: string, field: string) => {
-      if (field === 'name') name.value = data
-      if (field === 'article') article.value = data
-      type.value = 'find'
-  }
-  const selectedDestinations = ref([])
+    if (field === 'name') name.value = data;
+    if (field === 'article') article.value = data;
+    type.value = 'find';
+  };
+  const selectedDestinations = ref([]);
 
   const changeDestinations = (value: any) => {
-    selectedDestinations.value = value
+    selectedDestinations.value = value;
     destinations.value = selectedDestinations.value.map((destination: any) => {
       return destination.id;
-    })
-  }
+    });
+  };
 
   watch([
     () => name.value,
     () => article.value,
-    () => selectedDestinations.value
+    () => selectedDestinations.value,
   ], (array) => {
     if (type.value === 'find') {
       if (countOfChanges.value <= 0) {
         let foundedNomenclatures = [];
-          // @ts-ignore
-        handleFindNomenclatures(name.value ?? article.value)
+        // @ts-ignore
+        handleFindNomenclatures(name.value ?? article.value);
         foundedNomenclatures = nomenclatures.value[0];
 
         if (foundedNomenclatures) {
-          type.value = 'find'
-          article.value = foundedNomenclatures.article
-          name.value = foundedNomenclatures.name
+          type.value = 'find';
+          article.value = foundedNomenclatures.article;
+          name.value = foundedNomenclatures.name;
 
           if (foundedNomenclatures?.destinations.length !== 0 && selectedDestinations.value?.length === 0) {
             for (let destination of foundedNomenclatures?.destinations) {
               // @ts-ignore
-              selectedDestinations.value.push(destinationsArray.value?.data.find((item) => destination === item.id))
+              selectedDestinations.value.push(destinationsArray.value?.data.find((item) => destination === item.id));
             }
             destinations.value = selectedDestinations.value.map((destination: any) => {
               return destination.id;
-            })
+            });
           }
         } else {
-          type.value = 'create'
+          type.value = 'create';
         }
 
         setTimeout(() => {
@@ -166,16 +162,17 @@
             destinations.value !== undefined &&
             type.value !== 'create'
           ) {
-            countOfChanges.value++
+            countOfChanges.value++;
           }
-        }, 100)
+        }, 100);
       }
-      if (countOfChanges.value >= 2 && type.value !== 'create') popoverOpened.value = true
+      if (countOfChanges.value >= 2 && type.value !== 'create') popoverOpened.value = true;
     }
-  })
+  });
 
   onMounted(() => {
     createAdvertisementMounted();
+
     document.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleClose();
@@ -188,7 +185,7 @@
       if (event.key === 'Escape') {
         handleClose();
       }
-    })
+    });
   });
 
 </script>
@@ -326,7 +323,8 @@
                       selectedDestinations.length && 'text-black',
                     )
                   ">
-                  {{ selectedDestinations?.length > 0 ? selectedDestinations?.map((destination: any) => destination.name).join(', ') : 'Назначение' }}
+                  {{ selectedDestinations?.length > 0 ? selectedDestinations?.map((destination: any) => destination.name).join(', ') : 'Назначение'
+                  }}
                 </p>
                 <ChevronDown color="#858FA3" class="h-5 w-5" />
               </ListboxButton>
@@ -361,7 +359,7 @@
             </Listbox>
           </div>
           <div class="relative inline-block text-left" v-if="advertisementType === 'sell'">
-            <Listbox v-model="category" >
+            <Listbox v-model="category">
               <p class="pb-2 text-[14px] font-semibold text-[#101828]">
                 Категория
               </p>
@@ -491,7 +489,8 @@
           leave-to="opacity-0"
         >
           <div class='bg-white h-54 w-full rounded-t-md'>
-            <h2 class="w-full h-20 border-b-2 border-b-gray-100 border-solid p-4 text-blue-700 font-semibold">Вы изменили номенклатуру. Выберите действие</h2>
+            <h2 class="w-full h-20 border-b-2 border-b-gray-100 border-solid p-4 text-blue-700 font-semibold">Вы
+              изменили номенклатуру. Выберите действие</h2>
             <div class="flex flex-col gap-4 items-start p-4">
               <button @click="updateNomenclature">Сохранить с новыми значениями</button>
               <button @click="createNomenclature">Создать новую</button>

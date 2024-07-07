@@ -5,7 +5,7 @@ import { searchQuery } from '@/entities/offer';
 import { $selectedAdvertisement } from '@/entities/advertisement';
 
 interface IFilterValues {
-  vendors: string[];
+  vendors: number[];
   brands: string[];
   cities: number[];
   denomination?: string;

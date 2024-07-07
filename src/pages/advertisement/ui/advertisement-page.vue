@@ -49,9 +49,6 @@
     'advertisementItems',
     'advertisementFilters',
   ]);
-  watch(() => searchData.value, () => {
-    console.log(searchData.value);
-  })
 </script>
 
 <template>

@@ -13,7 +13,9 @@ export const $choosedCompany = createStore<Company | null>(null);
 persist({ store: $choosedCompany, key: 'company' });
 
 export const companiesQuery = createQuery({
-  handler: async () => (await $api.companies.getUserCompanies()).data,
+  handler: async () => {
+    return (await $api.companies.getUserCompanies()).data;
+  },
 });
 
 sample({

@@ -6,18 +6,10 @@
   import FilterInput from './filter-input.vue';
 
   import { searchQuery } from '@/entities/offer';
-  import {
-    $filterValues,
-    filterSubmitted,
-  } from '@/features/filter/model/filter-model';
+  import { $filterValues, filterSubmitted } from '@/features/filter/model/filter-model';
   import SelectAll from '@/features/filter/ui/select-all.vue';
   import { ScrollArea } from '@/shared/ui/scroll-area';
-  import {
-    Listbox,
-    ListboxButton,
-    ListboxOption,
-    ListboxOptions,
-  } from '@headlessui/vue';
+  import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
   import { useUnit } from 'effector-vue/composition';
   import {
     $buttonMode,
@@ -25,29 +17,37 @@
     createInterestQuery,
     listInterestsQuery,
   } from '@/pages/my-interests/model/interests-page-model';
+  import { listVendorsQuery } from '@/entities/vendors/model/vendors-model';
+  import { listDestinationsQuery } from '@/features/create-advertisement/model/create-advertisement';
 
   defineProps<{
     isFilterCardOpen: boolean;
   }>();
 
-  const selectedVendors = ref<string[]>([]);
+  const selectedVendors = ref<any[]>([]);
   const selectedBrands = ref<string[]>([]);
+  const selectedDestinations = ref<number[]>([]);
+
   const { data: interestsList } = useUnit(listInterestsQuery);
+  const { data: vendors } = useUnit(listVendorsQuery);
+  const { data: destinations } = useUnit(listDestinationsQuery);
+
+  const { start: vendorsMount } = useUnit(listVendorsQuery);
+  const { start: destinationsMount } = useUnit(listDestinationsQuery);
 
   const showAddedMessage = ref<boolean>(false);
 
   const handleFilterSubmit = useUnit(filterSubmitted);
 
-  const selectedCities = ref<number[]>([]);
-
   const { data, pending } = useUnit(searchQuery);
+
   const filterValues = useUnit($filterValues);
   const {
     $buttonMode: buttonMode,
-    changeButtonMode: handleChangeButtonMode
+    changeButtonMode: handleChangeButtonMode,
   } = useUnit({
     $buttonMode,
-    changeButtonMode
+    changeButtonMode,
   });
 
   const { form } = useFilter(data?.value?.data.filters as any);
@@ -62,7 +62,7 @@
       const values = form.values;
       const vendors = selectedVendors.value;
       const brands = selectedBrands.value;
-      const cities = selectedCities.value;
+      const cities = selectedDestinations.value;
 
       handleFilterSubmit({ ...values, vendors, brands, cities });
     }
@@ -70,50 +70,50 @@
 
   const filterByInterests = async (event: Event) => {
     if (interestsList.value?.length !== 0 && interestsList.value) {
-      handleChangeButtonMode('show-interests')
+      handleChangeButtonMode('show-interests');
 
-      selectedVendors.value = []
-      selectedBrands.value = []
-      selectedCities.value = []
+      selectedVendors.value = [];
+      selectedBrands.value = [];
+      selectedDestinations.value = [];
 
       interestsList.value.map((interest: any) => {
         if (interest.vendor !== 'undefined' && selectedVendors.value.indexOf(interest.vendor) === -1) {
-          selectedVendors.value.push(interest.vendor)
+          selectedVendors.value.push(interest.vendor);
         }
 
         if (interest.brand !== 'undefined' && selectedBrands.value.indexOf(interest.brand) === -1) {
-          selectedBrands.value.push(interest.brand)
+          selectedBrands.value.push(interest.brand);
         }
 
-        if (interest.city !== 'undefined' && selectedCities.value.indexOf(interest.city) === -1) {
-          selectedCities.value.push(interest.city)
+        if (interest.city !== 'undefined' && selectedDestinations.value.indexOf(interest.city) === -1) {
+          selectedDestinations.value.push(interest.city);
         }
-      })
+      });
 
       const vendors = selectedVendors.value;
       const brands = selectedBrands.value;
-      const cities = selectedCities.value;
+      const cities = selectedDestinations.value;
 
       handleFilterSubmit({
         vendors,
         brands,
-        cities
-      })
+        cities,
+      });
 
-      await onSubmit(event)
+      await onSubmit(event);
 
-    } else await onSubmit(event)
-  }
+    } else await onSubmit(event);
+  };
 
   const filterByAll = async (event: Event) => {
-    handleChangeButtonMode('show-all')
+    handleChangeButtonMode('show-all');
 
-    selectedVendors.value = []
-    selectedBrands.value = []
-    selectedCities.value = []
+    selectedVendors.value = [];
+    selectedBrands.value = [];
+    selectedDestinations.value = [];
 
-    await onSubmit(event)
-  }
+    await onSubmit(event);
+  };
 
   const addToInterests = async () => {
     await form.validate();
@@ -122,19 +122,19 @@
       const values = form.values;
       const vendors = selectedVendors.value;
       const brands = selectedBrands.value;
-      const cities = selectedCities.value;
+      const cities = selectedDestinations.value;
 
       createInterestQuery.start({
         ...values,
         vendor: vendors,
         brand: brands,
-        city: cities
+        city: cities,
       });
-        showAddedMessage.value = true;
-        handleFilterSubmit({ ...values, vendors, brands, cities });
-      }
+      showAddedMessage.value = true;
+      handleFilterSubmit({ ...values, vendors, brands, cities });
+    }
 
-    };
+  };
 
   const showClearButton = ref(false);
 
@@ -162,13 +162,16 @@
         countFrom: filterValues?.value?.countFrom,
         countTo: filterValues?.value?.countTo,
       });
-      selectedCities.value = (filterValues.value?.cities as number[]) ?? [];
-      selectedVendors.value = (filterValues.value?.vendors as string[]) ?? [];
+      selectedDestinations.value = (filterValues.value?.cities as number[]) ?? [];
+      selectedVendors.value = (filterValues.value?.vendors as any[]) ?? [];
       selectedBrands.value = (filterValues.value?.brands as string[]) ?? [];
     }
   });
 
   onMounted(() => {
+    vendorsMount();
+    destinationsMount();
+
     if (filterValues.value) {
       form.setValues({
         article: filterValues.value?.article,
@@ -178,8 +181,9 @@
         countFrom: filterValues?.value?.countFrom,
         countTo: filterValues?.value?.countTo,
       });
-      selectedCities.value = (filterValues.value?.cities as number[]) ?? [];
-      selectedVendors.value = (filterValues.value?.vendors as string[]) ?? [];
+
+      selectedDestinations.value = (filterValues.value?.cities as number[]) ?? [];
+      selectedVendors.value = (filterValues.value?.vendors as any[]) ?? [];
       selectedBrands.value = (filterValues.value?.brands as string[]) ?? [];
     }
   });
@@ -234,14 +238,14 @@
           <FilterInput name="description" label="Описание" placeholder="Описание" />
 
           <div class="relative inline-block text-left">
-            <Listbox v-model="selectedCities" multiple>
+            <Listbox v-model="selectedDestinations" multiple>
               <div class="flex w-full items-center justify-between">
                 <p class="py-2 text-[13px] font-semibold text-[#101828]">
                   Населенный пункт
                 </p>
                 <SelectAll
-                  :list="data?.data?.filters?.cities?.map((item) => item.id)"
-                  v-model="selectedCities" />
+                  :list="destinations?.map((item) => item.id)"
+                  v-model="selectedDestinations" />
               </div>
 
               <ListboxButton
@@ -257,7 +261,7 @@
                 <ListboxOptions
                   class="absolute z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                   <ListboxOption
-                    v-for="item in data?.data?.filters?.cities"
+                    v-for="item in destinations"
                     :key="item.id"
                     :value="item.id"
                     as="template">
@@ -265,10 +269,10 @@
                       class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
                       :class="{
                         '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
-                          selectedCities.some((city) => city === item.id),
+                          selectedDestinations.some((city) => city === item.id),
                       }">
                       <span class="block truncate font-normal">
-                        {{ item.title }}</span
+                        {{ item.name }}</span
                       >
                     </li>
                   </ListboxOption>
@@ -300,7 +304,7 @@
                   Поставщик
                 </p>
                 <SelectAll
-                  :list="data?.data?.filters?.vendors"
+                  :list="vendors"
                   v-model="selectedVendors" />
               </div>
 
@@ -316,17 +320,17 @@
                 <ListboxOptions
                   class="absolute z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                   <ListboxOption
-                    v-for="item in data?.data?.filters?.vendors"
-                    :key="item"
-                    :value="item"
+                    v-for="item in vendors"
+                    :key="item.id"
+                    :value="item.id?.toString()"
                     as="template">
                     <li
                       class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
                       :class="{
                         '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
-                          selectedVendors.some((vendor) => vendor === item),
+                          selectedVendors.some((vendor) => vendor === item.id),
                       }">
-                      <span class="block truncate font-normal">{{ item }}</span>
+                      <span class="block truncate font-normal">{{ item.title }}</span>
                     </li>
                   </ListboxOption>
                 </ListboxOptions>
@@ -334,45 +338,48 @@
             </Listbox>
           </div>
 
-          <div class="relative inline-block text-left">
-            <Listbox v-model="selectedBrands" multiple>
-              <div class="flex w-full items-center justify-between">
-                <p class="pb-2 text-[13px] font-semibold text-[#101828]">
-                  Бренд
-                </p>
-                <SelectAll
-                  :list="data?.data?.filters?.vendors"
-                  v-model="selectedVendors" />
-              </div>
+          <SelectBrand />
 
-              <ListboxButton
-                class="inline-flex w-full justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none">
-                <p class="text-sm font-normal text-gray-400">Бренд</p>
-              </ListboxButton>
-              <transition
-                leave-active-class="transition ease-in duration-100"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0">
-                <ListboxOptions
-                  class="absolute top-0 z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <ListboxOption
-                    v-for="item in data?.data?.filters?.brands"
-                    :key="item"
-                    :value="item"
-                    as="template">
-                    <li
-                      class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
-                      :class="{
-                        '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
-                          selectedBrands.some((brand) => brand === item),
-                      }">
-                      <span class="block truncate font-normal">{{ item }}</span>
-                    </li>
-                  </ListboxOption>
-                </ListboxOptions>
-              </transition>
-            </Listbox>
-          </div>
+          <!--brands select-->
+          <!--          <div class="relative inline-block text-left">
+                      <Listbox v-model="selectedBrands" multiple>
+                        <div class="flex w-full items-center justify-between">
+                          <p class="pb-2 text-[13px] font-semibold text-[#101828]">
+                            Бренд
+                          </p>
+                          <SelectAll
+                            :list="data?.data?.filters?.vendors"
+                            v-model="selectedVendors" />
+                        </div>
+
+                        <ListboxButton
+                          class="inline-flex w-full justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none">
+                          <p class="text-sm font-normal text-gray-400">Бренд</p>
+                        </ListboxButton>
+                        <transition
+                          leave-active-class="transition ease-in duration-100"
+                          leave-from-class="opacity-100"
+                          leave-to-class="opacity-0">
+                          <ListboxOptions
+                            class="absolute top-0 z-10 mt-1 max-h-36 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                            <ListboxOption
+                              v-for="item in brands"
+                              :key="item.id"
+                              :value="item"
+                              as="template">
+                              <li
+                                class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
+                                :class="{
+                                  '!bg-blue-200 !text-gray-900 hover:!bg-blue-100':
+                                    selectedBrands.some((brand) => brand === item.id?.toString()),
+                                }">
+                                <span class="block truncate font-normal">{{ item.name }}</span>
+                              </li>
+                            </ListboxOption>
+                          </ListboxOptions>
+                        </transition>
+                      </Listbox>
+                    </div>-->
           <Button
             variant='tertiary'
             class="w-full text-base font-semibold mt-4"
@@ -408,7 +415,7 @@
             <div class="flex flex-col items-center gap-y-2">
               <p class="text-[16px]">Добавлено</p>
               <p class="text-center text-[12px] text-[#858FA3]">
-                Чтобы посмотреть или удалить интерес, зайдите в этот <br/>
+                Чтобы посмотреть или удалить интерес, зайдите в этот <br />
                 раздел через меню
               </p>
             </div>

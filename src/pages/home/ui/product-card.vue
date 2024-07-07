@@ -1,34 +1,27 @@
 <script setup lang="ts">
   import { Purchased } from '@/widgets/purchased';
   import { Button } from '@/shared/ui/button';
-  import { ChevronDown, X } from 'lucide-vue-next';
-  import {
-    Carousel,
-    type CarouselApi,
-    CarouselContent,
-    CarouselItem,
-  } from '@/shared/ui/carousel';
-  import { computed, ref, watch } from 'vue';
+  import { X } from 'lucide-vue-next';
+  import { Carousel, type CarouselApi, CarouselContent, CarouselItem } from '@/shared/ui/carousel';
+  import { computed, onMounted, type Ref, ref, watch } from 'vue';
   import { watchOnce } from '@vueuse/core';
   import type { Item, Order } from '@/shared/api/generated/Api';
-  import { useRoute, useRouter } from 'vue-router';
   import { useUnit } from 'effector-vue/composition';
-  import { offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
-  import FormInput from '@/widgets/offers/ui/form-input.vue';
+  import { createOrderFx, offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
   import {
     FormControl,
     FormField,
-    FormItem,
-    FormLabel,
+    FormItem, FormLabel,
     FormMessage,
-    Input, Select,
-    SelectContent, SelectItem, SelectTrigger,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
     SelectValue,
   } from '@/shared/ui';
-  import { cn } from '@/shared/lib';
-  import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
   import { ScrollArea } from '@/shared/ui/scroll-area';
-  import { createOrderFx } from '@/widgets/offers/model/offers-model';
+  import { companiesQuery } from '@/widgets/change-company/model/change-company-model';
 
   const api = ref<CarouselApi>();
   const totalCount = ref(0);
@@ -41,9 +34,6 @@
     isProductCardOpen: boolean;
   }>();
 
-  const router = useRouter();
-  const route = useRoute();
-
   const emits = defineEmits(['close-product-card']);
 
   function closeProduct() {
@@ -53,6 +43,7 @@
   function setApi(val: CarouselApi) {
     api.value = val;
   }
+
   const handleAddOffer = useUnit(offerAddButtonClicked);
 
   watchOnce(api, (api) => {
@@ -72,7 +63,7 @@
         step.value = 1;
         showDetails.value = false;
       }
-    }
+    },
   );
 
   function handleBuyClick() {
@@ -89,6 +80,12 @@
   }
 
   const quantity = ref(1);
+  const company: Ref<string> = ref("");
+  const deliveryDate: Ref<string> = ref(new Date().toString());
+  const city: Ref<string> = ref("");
+
+  const { data: companies } = useUnit(companiesQuery);
+  const { start: companiesMount } = useUnit(companiesQuery);
 
   function incrementQuantity() {
     quantity.value += 1;
@@ -110,14 +107,15 @@
     if (!props.productItem) return;
 
     const order: Order = {
-      name: props.productItem.title,
+      name: props.productItem.title || '',
       amount: quantity.value,
-      price: props.productItem.price?.value || 0,
-      delivery_time: props.productItem.parsedDelivery,
-      company: 0,
+      price: Number(props.productItem.price?.value),
+      delivery_time: Number(props.productItem.parsedDelivery),
+      company: Number(company.value),
+      city: city.value,
       bid: 0,
-      offer: parseInt(props.productItem.itemId),
-      description: "Order created from offer",
+      offer: Number(props.productItem.itemId),
+      description: 'Order created from offer',
     };
 
     createOrderFx(order)
@@ -131,6 +129,10 @@
         error.value = 'Ошибка при создании заказа. Пожалуйста, попробуйте снова.';
       });
   }
+
+  onMounted(() => {
+    companiesMount();
+  });
 </script>
 
 <template>
@@ -228,11 +230,15 @@
               <div class='flex flex-col gap-2' v-if="step > 1">
                 <p class="text-xs font-semibold">Количество</p>
                 <div class='flex gap-3 items-center'>
-                  <div class='flex bg-[#5C5A57]/[0.1] rounded-lg w-[34px] h-[34px] items-center justify-center cursor-pointer' @click="decrementQuantity">
-                    <img src='./assets/minusIcon.svg' class='h-3.5 w-3.5'/>
+                  <div
+                    class='flex bg-[#5C5A57]/[0.1] rounded-lg w-[34px] h-[34px] items-center justify-center cursor-pointer'
+                    @click="decrementQuantity">
+                    <img src='./assets/minusIcon.svg' class='h-3.5 w-3.5' />
                   </div>
                   <p class='text-sm font-normal'>{{ quantity }}</p>
-                  <div class='flex bg-[#5C5A57]/[0.1] rounded-lg w-[34px] h-[34px] items-center justify-center cursor-pointer' @click="incrementQuantity">
+                  <div
+                    class='flex bg-[#5C5A57]/[0.1] rounded-lg w-[34px] h-[34px] items-center justify-center cursor-pointer'
+                    @click="incrementQuantity">
                     <img src='./assets/plusIcon.svg' class='h-3.5 w-3.5'>
                   </div>
                 </div>
@@ -242,13 +248,13 @@
                   <p class="text-xs font-semibold">Выберите способ доставки</p>
                   <FormField v-slot="{ componentField }" name="deliveryMethod">
                     <FormItem>
-                      <Select v-bind="componentField">
+                      <Select v-bind="componentField" v-model="city">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="one">Способ 1 </SelectItem>
-                          <SelectItem value="two">Способ 2 </SelectItem>
+                          <SelectItem value="one">Способ 1</SelectItem>
+                          <SelectItem value="two">Способ 2</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -261,7 +267,7 @@
                       <FormControl>
                         <Input
                           class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] w-1/2"
-                          type="date" />
+                          type="date" v-model="deliveryDate" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -271,13 +277,14 @@
                   <p class="text-xs font-semibold">Выберите филиал</p>
                   <FormField v-slot="{ componentField }" name="branch">
                     <FormItem>
-                      <Select v-bind="componentField">
+                      <Select v-bind="componentField" v-model="company">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="one">Филиал 1 </SelectItem>
-                          <SelectItem value="two">Филиал 2 </SelectItem>
+                          <SelectItem v-for="company in companies" :key="company.id" :value="company.id">
+                            {{ company.name }}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -293,12 +300,13 @@
         <p class="text-red-500">{{ error }}</p>
       </div>
     </div>
-    <div v-if='step < 4 && !isPurchased' class="flex flex-col gap-2.5 inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4">
+    <div v-if='step < 4 && !isPurchased'
+         class="flex flex-col gap-2.5 inset-x-0 bottom-0 border-t border-[#CCD0D9] bg-[#F9FAFB] p-4">
       <Button class="w-full text-[17px] font-semibold" @click="handleAddOffer()">Дать предложение</Button>
       <Button variant="tertiary" class="w-full text-[17px] font-semibold">Показать телефон</Button>
       <Button class="w-full text-[17px] font-semibold" @click="handleBuyClick">
         {{ step === 1 ? 'Купить' : step === 3 ? 'Подтвердить заказ' : 'Далее' }}
       </Button>
-      </div>
     </div>
+  </div>
 </template>
