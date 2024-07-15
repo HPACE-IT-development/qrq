@@ -38,10 +38,11 @@ const onSubmit = async () => {
       password: pass,
       is_active: vendor.is_active
     });
-    createInterestQuery.start({
-      vendor: vendor.title,
-      description: vendor.title,
-    });
+
+    // createInterestQuery.start({
+    //   vendor: vendor.title,
+    //   description: vendor.title,
+    // });
     emit('close-card');
   }
 }
