@@ -30,20 +30,29 @@ const onSubmit = async () => {
     const pass = form.values.password;
     const type = form.values.type;
     const vendor = selectedVendor.value.qwep_vendors.find((value)=>value.title === type);
-    handleVendorCredentials({
-      vendor_id: vendor.id,
-      branch_id: vendor.branches?.id ?? '',
-      title: vendor.title,
-      login: login,
-      password: pass,
-      is_active: vendor.is_active
-    });
 
-    // createInterestQuery.start({
-    //   vendor: vendor.title,
-    //   description: vendor.title,
-    // });
-    emit('close-card');
+    try {
+      const response = handleVendorCredentials({
+        vendor_id: vendor.qwep_id,
+        branch_id: vendor.branches?.id ?? '',
+        title: vendor.title,
+        login: login,
+        password: pass,
+        is_active: vendor.is_active
+      });
+
+      if (response) {
+        createInterestQuery.start({
+          vendor: vendor.title,
+          description: vendor.title,
+        });
+        emit('close-card');
+      } else {
+        loginError.value = true;
+      }
+    } catch (error) {
+      loginError.value = true;
+    }
   }
 }
 
