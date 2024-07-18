@@ -23,6 +23,10 @@ export const createOrderFx = createEffect(async (order: any) => {
   return $api.order.createOrder(order);
 });
 
+export const createBidFx = createEffect(async (bid: any) => {
+  return $api.bids.createBid(bid);
+});
+
 export const createOfferMutation = createMutation({
   handler: (data: Confirmation) => $api.confirmations.createConfirmation(data),
 });

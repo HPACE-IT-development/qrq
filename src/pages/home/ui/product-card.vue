@@ -8,7 +8,8 @@
   import type { CartBody1 } from '@/shared/api/generated/Api';
   import { useUnit } from 'effector-vue/composition';
   import {
-    createCartQWEP,
+    createBidFx,
+    createCartQWEP, createOfferFx, createOrderFx,
     createOrderQWEP,
     getCartQWEP,
     offerAddButtonClicked,
@@ -109,6 +110,9 @@
       step.value = 2;
     }
 
+    if (step.value === 3) {
+      await createOrderFromOffer(cartModel.item_id);
+    }
     /*const orderModel = {
      price: cart.basketItems[0].price,
      amount: cart.basketItems[0].quantity,
@@ -160,10 +164,50 @@
     await createOrderQWEP(orderModel).then((data: any) => {
       console.log(data);
 
+      if (data.success) {
+        createBidFromCart();
+      }
+
       // TODO: если пришли дополнительные поля, то добавить с помощью метода addFields,
       // TODO: если полей нет то создаем заказ в системе (создаем bid, если нет => создаем offer, если нет => создаем order)
       // TODO: отображаем, сообщение о покупке
     });
+  }
+
+  async function createBidFromCart(orderId: number) {
+    const bid = {
+      order_id: orderId,
+    };
+
+    createBidFx(bid).then(async (bidResponse) => {
+      if (bidResponse.success) {
+        await createOfferFromBid();
+      }
+    })
+  }
+
+  async function createOfferFromBid(bidId: number) {
+    const offer = {
+      bid_id: bidId,
+    };
+
+    createOfferFx(offer).then(async (offerResponse) => {
+      if (offerResponse.success) {
+        await createOrderFromOffer();
+      }
+    })
+  }
+
+  async function createOrderFromOffer(offerId: number) {
+    const order = {
+      offer_id: offerId,
+    };
+
+    createOrderFx(order).then((orderResponse) => {
+      if (orderResponse.success) {
+        step.value = 4;
+      }
+    })
   }
 
   function addFields(data: any) {
