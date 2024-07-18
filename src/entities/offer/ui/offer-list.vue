@@ -3,8 +3,9 @@
   import { cn } from '@/shared/lib';
   import { useRoute } from 'vue-router';
 
-  defineProps<{
+  const props = defineProps<{
     offersItems: Item[];
+    search_id: string;
   }>();
 
   const emit = defineEmits(['offerClicked', 'vendorClicked']);
@@ -15,7 +16,8 @@
     if (!item) {
       return;
     }
-    emit('offerClicked', item);
+
+    emit('offerClicked', { ...item, ...{search_id: props.search_id } });
   };
 
   const handleVendorClick = (vendorTitle: string) => {

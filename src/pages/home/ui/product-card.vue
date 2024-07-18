@@ -3,15 +3,20 @@
   import { Button } from '@/shared/ui/button';
   import { X } from 'lucide-vue-next';
   import { Carousel, type CarouselApi, CarouselContent, CarouselItem } from '@/shared/ui/carousel';
-  import { computed, onMounted, type Ref, ref, watch } from 'vue';
+  import { computed, type Ref, ref, watch } from 'vue';
   import { watchOnce } from '@vueuse/core';
-  import type { Item, Order } from '@/shared/api/generated/Api';
+  import type { CartBody1 } from '@/shared/api/generated/Api';
   import { useUnit } from 'effector-vue/composition';
-  import { createOrderFx, offerAddButtonClicked } from '@/widgets/offers/model/offers-model';
+  import {
+    createCartQWEP,
+    createOrderQWEP,
+    getCartQWEP,
+    offerAddButtonClicked,
+  } from '@/widgets/offers/model/offers-model';
   import {
     FormControl,
     FormField,
-    FormItem, FormLabel,
+    FormItem,
     FormMessage,
     Input,
     Select,
@@ -21,7 +26,6 @@
     SelectValue,
   } from '@/shared/ui';
   import { ScrollArea } from '@/shared/ui/scroll-area';
-  import { companiesQuery } from '@/widgets/change-company/model/change-company-model';
 
   const api = ref<CarouselApi>();
   const totalCount = ref(0);
@@ -30,9 +34,18 @@
   const step = ref(1);
   const purchasedItems = ref(new Map<string, boolean>());
   const props = defineProps<{
-    productItem: Item;
+    productItem: any;
     isProductCardOpen: boolean;
   }>();
+  const quantity = ref(1);
+  let cart: Ref<any> = ref(null);
+  let fields: Ref<any> = ref([]);
+  let fieldsObject: any = ref({});
+  const isPurchased = computed(() => {
+    if (!props.productItem || !props.productItem.itemId) return false;
+    return purchasedItems.value.get(props.productItem.itemId) || false;
+  });
+  const error = ref<string | null>(null);
 
   const emits = defineEmits(['close-product-card']);
 
@@ -66,27 +79,6 @@
     },
   );
 
-  function handleBuyClick() {
-    if (!props.productItem) return;
-
-    if (step.value === 1) {
-      step.value = 2;
-    } else if (step.value === 2) {
-      showDetails.value = true;
-      step.value = 3;
-    } else if (step.value === 3) {
-      handleOrderCreation();
-    }
-  }
-
-  const quantity = ref(1);
-  const company: Ref<string> = ref("");
-  const deliveryDate: Ref<string> = ref(new Date().toString());
-  const city: Ref<string> = ref("");
-
-  const { data: companies } = useUnit(companiesQuery);
-  const { start: companiesMount } = useUnit(companiesQuery);
-
   function incrementQuantity() {
     quantity.value += 1;
   }
@@ -97,16 +89,33 @@
     }
   }
 
-  const isPurchased = computed(() => {
-    if (!props.productItem || !props.productItem.itemId) return false;
-    return purchasedItems.value.get(props.productItem.itemId) || false;
-  });
-  const error = ref<string | null>(null);
-
-  function handleOrderCreation() {
+  async function handleBuyClick() {
     if (!props.productItem) return;
 
-    const order: Order = {
+    if (step.value === 2) {
+      await createQWEPOrder();
+      step.value = 3;
+    }
+
+    if (step.value === 1) {
+      const cartModel: CartBody1 = {
+        search_id: props.productItem.search_id,
+        item_id: props.productItem.itemId,
+        quantity: quantity.value,
+      };
+
+      await createCartQWEP(cartModel);
+      await getCart();
+      step.value = 2;
+    }
+
+    /*const orderModel = {
+     price: cart.basketItems[0].price,
+     amount: cart.basketItems[0].quantity,
+   };
+
+   await createOrderQWEP(orderModel);*/
+    /*const order: Order = {
       name: props.productItem.title || '',
       amount: quantity.value,
       price: Number(props.productItem.price?.value),
@@ -127,12 +136,41 @@
       .catch((error) => {
         console.error('Error creating order:', error);
         error.value = 'Ошибка при создании заказа. Пожалуйста, попробуйте снова.';
-      });
+      });*/
   }
 
-  onMounted(() => {
-    companiesMount();
-  });
+  async function getCart() {
+    await getCartQWEP(props.productItem.accountId).then((data: any) => {
+      cart.value = data.data.cart;
+      if (data.data.cart.basketForm?.fields) {
+        addFields(data.data.cart.basketForm?.fields);
+      }
+    });
+
+    showDetails.value = true;
+  }
+
+  async function createQWEPOrder() {
+    const orderModel = {
+      account_id: cart.value.accountId,
+      form_id: cart.value.basketForm?.formId,
+      field_values: Object.entries(fieldsObject.value).map(([field_name, value]) => ([{ field_name, value }])),
+    };
+
+    await createOrderQWEP(orderModel).then((data: any) => {
+      console.log(data);
+
+      // TODO: если пришли дополнительные поля, то добавить с помощью метода addFields,
+      // TODO: если полей нет то создаем заказ в системе (создаем bid, если нет => создаем offer, если нет => создаем order)
+      // TODO: отображаем, сообщение о покупке
+    });
+  }
+
+  function addFields(data: any) {
+    for (let obj of data) {
+      fields.value.push(obj);
+    }
+  }
 </script>
 
 <template>
@@ -226,8 +264,9 @@
               </div>
             </div>
             <div class="mt-7 flex flex-col gap-4">
-              <h1 class="font-normal text-lg" v-if="step > 1">Уточните данные для покупки</h1>
-              <div class='flex flex-col gap-2' v-if="step > 1">
+              <h1 class="font-normal text-lg">Уточните данные для покупки</h1>
+
+              <div class='flex flex-col gap-2'>
                 <p class="text-xs font-semibold">Количество</p>
                 <div class='flex gap-3 items-center'>
                   <div
@@ -243,54 +282,48 @@
                   </div>
                 </div>
               </div>
-              <div v-if="showDetails" class='flex flex-col gap-4'>
-                <div class='flex flex-col gap-2'>
-                  <p class="text-xs font-semibold">Выберите способ доставки</p>
-                  <FormField v-slot="{ componentField }" name="deliveryMethod">
-                    <FormItem>
-                      <Select v-bind="componentField" v-model="city">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="one">Способ 1</SelectItem>
-                          <SelectItem value="two">Способ 2</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  </FormField>
+
+              <template v-if="showDetails">
+                <div v-for="field in fields" :key="field.fieldId" class='flex flex-col gap-4'>
+                  <div class='flex flex-col gap-2'>
+                    <p class="text-xs font-semibold">{{ field.title }}</p>
+                    <FormField v-if="field.typeName === 'SelectField'"
+                               v-slot="{ componentField }"
+                               :name="field.fieldName"
+                    >
+                      <FormItem>
+                        <Select v-bind="componentField" v-model="fieldsObject[field.fieldName]">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem
+                              v-for="(option, index) in field.options"
+                              :key="index" :value="option.value"
+                            >
+                              {{ option.text }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    </FormField>
+                    <FormField v-if="field.typeName === 'TextareaField'" v-slot="{ componentField }"
+                               :name="field.fieldName">
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] placeholder:text-[#858FA3]"
+                            type="text"
+                            :placeholder="field.title"
+                            v-bind="componentField"
+                            v-model="fieldsObject[field.fieldName]" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    </FormField>
+                  </div>
                 </div>
-                <div class='flex flex-col gap-2'>
-                  <p class="text-xs font-semibold">Введите дату доставки</p>
-                  <FormField v-slot="{ componentField }" name="deliveryDate">
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          class="h-fit rounded-[8px] border border-[#D0D4DB] px-4 py-2 text-[16px] w-1/2"
-                          type="date" v-model="deliveryDate" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
-                <div class='flex flex-col gap-2'>
-                  <p class="text-xs font-semibold">Выберите филиал</p>
-                  <FormField v-slot="{ componentField }" name="branch">
-                    <FormItem>
-                      <Select v-bind="componentField" v-model="company">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem v-for="company in companies" :key="company.id" :value="company.id">
-                            {{ company.name }}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  </FormField>
-                </div>
-              </div>
+              </template>
             </div>
           </div>
         </div>

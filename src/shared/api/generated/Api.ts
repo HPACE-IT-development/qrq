@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -238,6 +239,32 @@ export interface Offer {
   destinations?: number[];
 }
 
+export interface cartQWEP {
+  accountId: number,
+  basketForm?: any,
+  basketId: string,
+  basketItems: basketItem[],
+  hasPartOrder: boolean,
+  vendorId: string,
+  vendorTitle: string
+}
+
+export interface basketItem {
+  article: string,
+  available: any,
+  basketItemId: string,
+  brand: string,
+  delivery?: any,
+  fields?: any,
+  orderHash: string,
+  price: string,
+  priceTotal: string,
+  quantity: number,
+  amount?: number,
+  title: string,
+  warehouse: string
+}
+
 export type Offers = Offer[];
 
 export interface Confirmation {
@@ -279,7 +306,7 @@ export interface Order {
    * @default 0
    */
   status?: 0 | 1;
-  name: string;
+  name?: string;
   amount: number;
   price: number;
   delivery_time?: number;
@@ -416,12 +443,12 @@ export interface SearchRequest {
 }
 
 export interface Item {
-  itemId?: string;
+  itemId: string;
   accountId?: number;
   fromClarification?: string;
   brand?: string;
   highlightBrand?: string;
-  article?: string;
+  article: string;
   originalArticle?: string;
   title?: string;
   photo?: string;
@@ -563,13 +590,7 @@ export interface VendorData {
   website?: string;
 }
 
-import type {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-  HeadersDefaults,
-  ResponseType,
-} from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from 'axios';
 import axios from 'axios';
 
 export type QueryParamsType = Record<string | number, any>;
@@ -619,11 +640,11 @@ export class HttpClient<SecurityDataType = unknown> {
   private format?: ResponseType;
 
   constructor({
-    securityWorker,
-    secure,
-    format,
-    ...axiosConfig
-  }: ApiConfig<SecurityDataType> = {}) {
+                securityWorker,
+                secure,
+                format,
+                ...axiosConfig
+              }: ApiConfig<SecurityDataType> = {}) {
     this.instance = axios.create({
       ...axiosConfig,
       baseURL:
@@ -651,9 +672,9 @@ export class HttpClient<SecurityDataType = unknown> {
       ...(params2 || {}),
       headers: {
         ...((method &&
-          this.instance.defaults.headers[
-            method.toLowerCase() as keyof HeadersDefaults
-          ]) ||
+            this.instance.defaults.headers[
+              method.toLowerCase() as keyof HeadersDefaults
+              ]) ||
           {}),
         ...(params1.headers || {}),
         ...((params2 && params2.headers) || {}),
@@ -688,14 +709,14 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   public request = async <T = any, _E = any>({
-    secure,
-    path,
-    type,
-    query,
-    format,
-    body,
-    ...params
-  }: FullRequestParams): Promise<AxiosResponse<T>> => {
+                                               secure,
+                                               path,
+                                               type,
+                                               query,
+                                               format,
+                                               body,
+                                               ...params
+                                             }: FullRequestParams): Promise<AxiosResponse<T>> => {
     const secureParams =
       ((typeof secure === 'boolean' ? secure : this.secure) &&
         this.securityWorker &&
@@ -1893,7 +1914,7 @@ export class Api<
         ...params,
       }),
   };
-  orders = {
+  order = {
     /**
      * No description
      *
@@ -1921,9 +1942,9 @@ export class Api<
      * @request POST:/orders/
      * @secure
      */
-    createOrder: (data: Order, params: RequestParams = {}) =>
+    createOrder: (data: any, params: RequestParams = {}) =>
       this.request<Order, Error>({
-        path: `/orders/`,
+        path: `/order`,
         method: 'POST',
         body: data,
         secure: true,
@@ -2276,7 +2297,7 @@ export class Api<
      * @request GET:/cart
      * @secure
      */
-    getCart: (params: RequestParams = {}) =>
+    getCart: (params?: { query: { account_id: any } }) =>
       this.request<Vendors, Error>({
         path: `/cart`,
         method: 'GET',

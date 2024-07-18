@@ -56,10 +56,11 @@
   };
   const { data } = useUnit(searchQuery);
 
-  const handleItemClick = (item: Item) => {
+  const handleItemClick = (item: any) => {
     if (!item) {
       return;
     }
+
     emit('offerClicked', item);
   };
 
@@ -124,6 +125,7 @@
       class="flex max-h-[calc(100vh-72px)] flex-col gap-y-4 px-4 max-sm:max-h-[calc(100vh-201px)]">
       <OfferList
         :offers-items="data?.data?.items as any"
+        :search_id="data?.data.search_id as string"
         @offer-clicked="handleItemClick"
         @vendor-clicked="handleVendorClick" />
       <div class="mx-auto flex w-fit bg-[#F9FAFB] py-2">

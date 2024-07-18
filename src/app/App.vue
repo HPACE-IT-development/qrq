@@ -76,6 +76,7 @@
   }
 
   const productItem = ref<Item>();
+  const searchId = ref<any>();
 
   const isProductCardOpen = ref(false);
   const isFilterCardOpen = ref(false);
@@ -114,9 +115,7 @@
   onMounted(() => {
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-  });
 
-  onMounted(() => {
     if (route.query.search) {
       router.push({
         query: {
@@ -136,6 +135,7 @@
         'active-card': item.itemId,
       },
     });
+
     isProductCardOpen.value = true;
     isFilterCardOpen.value = false;
     isInterestsCardOpen.value = false;
@@ -275,6 +275,7 @@
           v-if="productItem"
           class="inline-block"
           :product-item="productItem"
+          :search_id="searchId"
           :is-product-card-open="isProductCardOpen"
           @close-product-card="handleCloseProductCard" />
       </div>
@@ -362,6 +363,7 @@
         v-if="isProductCardOpen && productItem && !isFilterCardOpen"
         :product-item="productItem"
         :is-product-card-open="isProductCardOpen"
+        :search_id="searchId"
         @close-product-card="handleCloseProductCard"
         class="hidden sm:flex lg:hidden" />
 
@@ -374,19 +376,19 @@
           !isProductCardOpen &&
           !isFilterCardOpen
         " />
-      <!--      <ManuallyAddOffer-->
-      <!--        v-if="-->
-      <!--          showAddOfferModal &&-->
-      <!--          !isMobile &&-->
-      <!--          route.path === '/advertisements' &&-->
-      <!--          !isProductCardOpen &&-->
-      <!--          !isFilterCardOpen-->
-      <!--        " />-->
-      <!--      <Filter-->
-      <!--        v-if="isFilterCardOpen && !isMobile && !isProductCardOpen"-->
-      <!--        :is-filter-card-open="isFilterCardOpen"-->
-      <!--        @close-filter-card="isFilterCardOpen = false"-->
-      <!--        class="hidden w-full sm:inline-block xl:hidden" />-->
+<!--            <ManuallyAddOffer
+              v-if="
+                showAddOfferModal &&
+                !isMobile &&
+                route.path === '/advertisements' &&
+                !isProductCardOpen &&
+                !isFilterCardOpen
+              " />
+            <Filter
+              v-if="isFilterCardOpen && !isMobile && !isProductCardOpen"
+              :is-filter-card-open="isFilterCardOpen"
+              @close-filter-card="isFilterCardOpen = false"
+              class="hidden w-full sm:inline-block xl:hidden" />-->
     </div>
     <div
       v-if="
@@ -404,6 +406,7 @@
       v-if="productItem && !isMobile && !showAddManuallyOffer && !showAddOffer"
       :product-item="productItem"
       :is-product-card-open="isProductCardOpen"
+      :search_id="searchId"
       @close-product-card="handleCloseProductCard"
       class="flex w-full sm:hidden lg:flex" />
 

@@ -1,9 +1,11 @@
-import { createEvent, createEffect, createStore, sample } from 'effector';
+import { createEffect, createEvent, createStore, sample } from 'effector';
 import { not } from 'patronum';
 import { createMutation } from '@farfetched/core';
-import type { Confirmation, Offer, Order } from '@/shared/api/generated/Api';
+import type { basketItem, CartBody1, Confirmation } from '@/shared/api/generated/Api';
 import { $api } from '@/shared/api';
 import { offersQuery } from '@/widgets/my-suggestions';
+import { $qwepApi } from '@/shared/api/api';
+
 interface FormValues {
   name: string;
   amount: number;
@@ -13,16 +15,27 @@ interface FormValues {
   purpose?: string | undefined;
 }
 
+export const createOfferFx = createEffect(async (data: any) => {
+  return $api.offers.createOffer(data);
+});
+
+export const createOrderFx = createEffect(async (order: any) => {
+  return $api.order.createOrder(order);
+});
+
 export const createOfferMutation = createMutation({
   handler: (data: Confirmation) => $api.confirmations.createConfirmation(data),
 });
+export const createCartQWEP = createEffect(async (cart: CartBody1) => {
+  return $qwepApi.cart.createCartItem(cart);
+});
+export const getCartQWEP: any = createEffect(async (accountId: number) => {
+  return $qwepApi.cart.getCart({ query: { account_id: accountId } });
+});
+export const createOrderQWEP = createEffect(async (order: any) => {
+  return $qwepApi.order.createOrder(order);
+});
 
-export const createOfferFx = createEffect(async (data: Offer) => {
-  return $api.offers.createOffer(data);
-});
-export const createOrderFx = createEffect(async (order: Order) => {
-  return $api.orders.createOrder(order);
-});
 export const manuallyOfferAddButtonClicked = createEvent();
 export const offerAddButtonClicked = createEvent();
 export const formSubmitted = createEvent<FormValues>();
@@ -56,5 +69,9 @@ sample({
   clock: createOfferMutation.finished.success,
   target: offersQuery.start,
 });
- // @ts-ignore
+sample({
+  clock: createOfferMutation.finished.success,
+  target: offersQuery.start,
+});
+// @ts-ignore
 formSubmitted.watch(createOfferFx);
