@@ -20,7 +20,7 @@ export const createOfferFx = createEffect(async (data: any) => {
 });
 
 export const createOrderFx = createEffect(async (order: any) => {
-  return $api.order.createOrder(order);
+  return $api.order.createOrders(order);
 });
 
 export const createBidFx = createEffect(async (bid: any) => {
@@ -36,8 +36,8 @@ export const createCartQWEP = createEffect(async (cart: CartBody1) => {
 export const getCartQWEP: any = createEffect(async (accountId: number) => {
   return $qwepApi.cart.getCart({ query: { account_id: accountId } });
 });
-export const createOrderQWEP = createEffect(async (order: any) => {
-  return $qwepApi.order.createOrder(order);
+export const createOrderQWEP = createEffect(async (data: any) => {
+  return $qwepApi.order.createOrder(data);
 });
 
 export const manuallyOfferAddButtonClicked = createEvent();

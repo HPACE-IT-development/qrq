@@ -709,14 +709,8 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   public request = async <T = any, _E = any>({
-                                               secure,
-                                               path,
-                                               type,
-                                               query,
-                                               format,
-                                               body,
-                                               ...params
-                                             }: FullRequestParams): Promise<AxiosResponse<T>> => {
+    secure, path, type, query, format, body, ...params
+  }: FullRequestParams): Promise<AxiosResponse<T>> => {
     const secureParams =
       ((typeof secure === 'boolean' ? secure : this.secure) &&
         this.securityWorker &&
@@ -1948,7 +1942,18 @@ export class Api<
         method: 'POST',
         body: data,
         secure: true,
-        type: ContentType.FormData,
+        type: ContentType.Json,
+        format: 'json',
+        ...params,
+      }),
+
+    createOrders: (data: any, params: RequestParams = {}) =>
+      this.request<Order, Error>({
+        path: `/orders`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: 'json',
         ...params,
       }),

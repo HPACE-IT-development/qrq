@@ -9,7 +9,9 @@
   import { useUnit } from 'effector-vue/composition';
   import {
     createBidFx,
-    createCartQWEP, createOfferFx, createOrderFx,
+    createCartQWEP,
+    createOfferFx,
+    createOrderFx,
     createOrderQWEP,
     getCartQWEP,
     offerAddButtonClicked,
@@ -93,9 +95,8 @@
   async function handleBuyClick() {
     if (!props.productItem) return;
 
-    if (step.value === 2) {
+    if (step.value === 3) {
       await createQWEPOrder();
-      step.value = 3;
     }
 
     if (step.value === 1) {
@@ -107,46 +108,15 @@
 
       await createCartQWEP(cartModel);
       await getCart();
-      step.value = 2;
+      step.value = 3;
     }
-
-    if (step.value === 3) {
-      await createOrderFromOffer(cartModel.item_id);
-    }
-    /*const orderModel = {
-     price: cart.basketItems[0].price,
-     amount: cart.basketItems[0].quantity,
-   };
-
-   await createOrderQWEP(orderModel);*/
-    /*const order: Order = {
-      name: props.productItem.title || '',
-      amount: quantity.value,
-      price: Number(props.productItem.price?.value),
-      delivery_time: Number(props.productItem.parsedDelivery),
-      company: Number(company.value),
-      city: city.value,
-      bid: 0,
-      offer: Number(props.productItem.itemId),
-      description: 'Order created from offer',
-    };
-
-    createOrderFx(order)
-      .then((response) => {
-        console.log('Order created successfully:', response);
-        step.value = 4;
-        error.value = null;
-      })
-      .catch((error) => {
-        console.error('Error creating order:', error);
-        error.value = 'Ошибка при создании заказа. Пожалуйста, попробуйте снова.';
-      });*/
   }
 
   async function getCart() {
     await getCartQWEP(props.productItem.accountId).then((data: any) => {
       cart.value = data.data.cart;
-      if (data.data.cart.basketForm?.fields) {
+
+      if (data.data.cart?.basketForm?.fields) {
         addFields(data.data.cart.basketForm?.fields);
       }
     });
@@ -158,56 +128,52 @@
     const orderModel = {
       account_id: cart.value.accountId,
       form_id: cart.value.basketForm?.formId,
-      field_values: Object.entries(fieldsObject.value).map(([field_name, value]) => ([{ field_name, value }])),
+      field_values: Object.entries(fieldsObject.value).map(([field_name, value]) => ({ field_name, value })),
     };
 
     await createOrderQWEP(orderModel).then((data: any) => {
-      console.log(data);
-
-      if (data.success) {
+      if (data.data.success) {
         createBidFromCart();
       }
-
-      // TODO: если пришли дополнительные поля, то добавить с помощью метода addFields,
-      // TODO: если полей нет то создаем заказ в системе (создаем bid, если нет => создаем offer, если нет => создаем order)
-      // TODO: отображаем, сообщение о покупке
     });
   }
 
-  async function createBidFromCart(orderId: number) {
-    const bid = {
-      order_id: orderId,
+  async function createBidFromCart() {
+    const bidModel = {
+      name: props.productItem.title,
+      amount: props.productItem.quantity.value,
+      article: props.productItem.article,
+      delivery_time: Number(props.productItem.parsedDelivery),
     };
 
-    createBidFx(bid).then(async (bidResponse) => {
-      if (bidResponse.success) {
-        await createOfferFromBid();
-      }
-    })
+    createBidFx(bidModel).then(async (bidResponse: any) => {
+      await createOfferFromBid(bidResponse.data);
+    });
   }
 
-  async function createOfferFromBid(bidId: number) {
-    const offer = {
-      bid_id: bidId,
+  async function createOfferFromBid(bidModel: any) {
+    const offerModel = {
+      bid_id: bidModel.id,
+      name: bidModel.name,
+      amount: bidModel.amount,
     };
 
-    createOfferFx(offer).then(async (offerResponse) => {
-      if (offerResponse.success) {
-        await createOrderFromOffer();
-      }
-    })
+    createOfferFx(offerModel).then(async (offerResponse: any) => {
+      await createOrderFromOffer(offerResponse.data);
+    });
   }
 
-  async function createOrderFromOffer(offerId: number) {
+  async function createOrderFromOffer(offerModel: any) {
     const order = {
-      offer_id: offerId,
+      offer_id: offerModel.id,
+      name: offerModel.name,
+      amount: offerModel.amount,
+      price: offerModel.price,
     };
 
-    createOrderFx(order).then((orderResponse) => {
-      if (orderResponse.success) {
-        step.value = 4;
-      }
-    })
+    createOrderFx(order).then(() => {
+      step.value = 4;
+    });
   }
 
   function addFields(data: any) {
