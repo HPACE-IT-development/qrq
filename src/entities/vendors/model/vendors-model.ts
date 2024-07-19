@@ -5,6 +5,7 @@ import { createQuery } from "@farfetched/core";
 import { $qwepApi } from "@/shared/api/api";
 import { $searchTerm } from '@/widgets/header/model/header-modal';
 
+export const handleMount = createEvent()
 export const vendorClicked = createEvent<Vendor>();
 export const $selectedVendor = createStore<Vendor | null>(null);
 export const $selectedVendorId = createStore<string | null>(null).on(
@@ -18,6 +19,13 @@ export const getVendors = createQuery({
     return response.data;
   }
 });
+
+export const listVendorsQuery = createQuery({
+  handler: async () => {
+    return (await $qwepApi.vendors.getVendors()).data
+  },
+});
+
 
 persist({
   store: $selectedVendorId,
@@ -60,3 +68,8 @@ sample({
   // @ts-ignore
   skipVoid: false,
 });
+
+sample({
+  clock: handleMount,
+  target: listVendorsQuery.start
+})

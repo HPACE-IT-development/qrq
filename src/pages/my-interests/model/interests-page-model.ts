@@ -1,6 +1,6 @@
 import { createQuery, keepFresh } from '@farfetched/core';
 import type {RequestParams} from '@/shared/api/generated/Api';
-import {$qwepApi} from "@/shared/api/api";
+import { $api, $qwepApi } from '@/shared/api/api';
 import { createEvent, createStore, sample } from 'effector';
 import { spread } from 'patronum';
 
@@ -8,7 +8,7 @@ type TButtonMode = 'show-all' | 'show-interests';
 
 export const listInterestsQuery = createQuery({
     handler: async () => {
-        return (await $qwepApi.interests.getInterests()).data;
+        return (await $qwepApi.interests.getInterests()).data
     },
 });
 

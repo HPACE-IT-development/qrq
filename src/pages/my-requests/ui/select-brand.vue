@@ -106,7 +106,6 @@
           </PaginationListItem>
           <PaginationEllipsis v-else :key="item.type" :index="index" />
         </template>
-
         <PaginationNext />
       </PaginationList>
     </Pagination>

@@ -1,19 +1,17 @@
 import { $api } from '@/shared/api';
 import type { VerifyUserResponse } from '@/shared/api/generated/Api';
-import {
-  $formMode,
-  handleRegistrationFulfilled,
-} from '@/widgets/auth/lib/form-mode';
+import { $formMode, handleRegistrationFulfilled } from '@/widgets/auth/lib/form-mode';
 import {
   $isVerifyCaptchaVisible,
   $verifyCaptchaValue,
   verificationCodeComplete,
   verifyUserMutation,
 } from '@/widgets/auth/model/verification-model';
-import { createMutation } from '@farfetched/core';
+import { createMutation, createQuery } from '@farfetched/core';
 import { createEffect, createEvent, createStore, sample } from 'effector';
 import { spread } from 'patronum';
 import './verification-model';
+import { $qwepApi } from '@/shared/api/api';
 
 export type TInputMode = 'email' | 'phone';
 
@@ -36,6 +34,7 @@ interface SendDetailsParams {
   captchaToken?: string;
 }
 
+export const handleMount = createEvent();
 export const valueInputed = createEvent<string>();
 export const detailsFormSubmitted = createEvent<IFormValues>();
 export const authFormSubmitted = createEvent<IAuthFormValues>();
