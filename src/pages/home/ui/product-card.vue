@@ -78,6 +78,7 @@
       if (newItem !== oldItem) {
         step.value = 1;
         showDetails.value = false;
+        fields.value = [];
       }
     },
   );
