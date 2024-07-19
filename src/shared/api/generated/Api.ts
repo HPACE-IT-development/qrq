@@ -2291,6 +2291,26 @@ export class Api<
         format: 'json',
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags QWEP
+     * @name CreateAccount
+     * @summary метод создания аккаунта
+     * @request POST:/vendors
+     * @secure
+     */
+    createAccount: (data: Vendor, params: RequestParams = {}) =>
+        this.request<Vendors, Error>({
+          path: `/accounts/`,
+          method: 'POST',
+          body: data,
+          secure: true,
+          type: ContentType.FormData,
+          format: 'json',
+          ...params,
+        }),
   };
   cart = {
     /**
