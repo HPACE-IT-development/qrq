@@ -21,44 +21,48 @@ const emit = defineEmits(['close-card', 'open-filter-by-vendor']);
 const {form} = useVendorCredentialsForm();
 const selectedVendor = useUnit($selectedVendor);
 const loginError = ref(false);
-const { start: handleVendorCredentials } = useUnit(createAccountQuery);
+const showAddedMessage = ref<boolean>(false);
 
 const onSubmit = async () => {
   await form.validate();
+
   if (Object.keys(form.errors.value).length <= 0) {
     const login = form.values.login;
     const pass = form.values.password;
     const type = form.values.type;
-    const vendor = selectedVendor.value.qwep_vendors.find((value)=>value.title === type);
+    const vendor = selectedVendor.value.qwep_vendors.find((value) => value.title === type);
 
-    if (vendor) {
-      try {
-        const response = await handleVendorCredentials({
-          vendor_id: vendor.qwep_id,
-          branch_id: vendor.branches?.id ?? '',
-          title: vendor.title,
-          login: login,
-          password: pass,
-          is_active: vendor.is_active
-        });
+    const vendorModel = {
+      vendor_id: vendor.qwep_id,
+      branch_id: vendor.branches?.id ?? '',
+      title: vendor.title,
+      login: login,
+      password: pass,
+      is_active: vendor.is_active
+    };
 
-        if (response?.value.vendor_id) {
+    try {
+      await createAccountQuery(vendorModel).then((data: any) => {
+
+        if (data.response.status === 200 || data.response.status === 201) {
           createInterestQuery.start({
             vendor: vendor.title,
             description: vendor.title,
           });
-          emit('close-card');
+          showAddedMessage.value = true;
         } else {
+          showAddedMessage.value = false;
           loginError.value = true;
         }
-      } catch (error) {
-        loginError.value = true;
-      }
+      })
+    } catch (error) {
+      loginError.value = true;
     }
   }
 }
 
 function closeCard() {
+  showAddedMessage.value = false;
   emit('close-card');
 }
 
@@ -80,7 +84,7 @@ function closeCard() {
         </p>
       </Button>
     </div>
-    <div
+    <div v-if='!showAddedMessage'
         class="h-[calc(100vh-177px)] w-full bg-[#F9FAFB]">
       <form
           class="mt-4 flex w-full flex-col gap-y-4 px-5"
@@ -142,6 +146,20 @@ function closeCard() {
       </form>
     </div>
     <div
+      v-else
+      class="h-[calc(100vh-177px)] w-full border-t border-[#D0D4DB] bg-[#F9FAFB]">
+      <div class="mx-auto flex flex-col items-center justify-center gap-y-6 p-4">
+        <img src="./assets/star.png" class="mt-4">
+        <div class="flex flex-col items-center gap-y-2">
+          <p class="text-[16px]">Добавлено</p>
+          <p class="text-center text-[12px] text-[#858FA3]">
+            Чтобы посмотреть или удалить интерес, зайдите в этот <br />
+            раздел через меню
+          </p>
+        </div>
+      </div>
+    </div>
+    <div v-if='!showAddedMessage'
         class="inset-x-0 bottom-0 flex w-full flex-col gap-y-3 border-t border-[#CCD0D9] bg-white p-4">
       <Button @click.prevent="onSubmit"
               variant='tertiary'
