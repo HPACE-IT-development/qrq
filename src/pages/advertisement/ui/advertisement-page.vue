@@ -12,7 +12,6 @@
   import { $selectedAdvertisementId } from '@/entities/advertisement/model/advertisement-model';
   import { onMounted, watch } from 'vue';
   import { VendorsList } from '@/entities/vendors';
-  import { UsersList } from '@/entities/users';
   const route = useRoute();
   const router = useRouter();
 
