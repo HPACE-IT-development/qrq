@@ -102,6 +102,10 @@
     if (selectedVendor?.value?.id) {
       isVendorInfoCardOpen.value = true;
       isVendorCredentialsCardOpen.value = false;
+
+      isInterestsCardOpen.value = false;
+      isProductCardOpen.value = false;
+      isFilterCardOpen.value = false;
     }
   });
 
@@ -140,6 +144,9 @@
     isFilterCardOpen.value = false;
     isInterestsCardOpen.value = false;
     productItem.value = item;
+
+    isVendorCredentialsCardOpen.value = false;
+    isVendorInfoCardOpen.value = false;
   }
 
   function handleCloseProductCard() {
@@ -159,6 +166,11 @@
       router.push('/');
       isSidebarOpen.value = false;
       isInterestsCardOpen.value = true;
+      isProductCardOpen.value = false;
+      isFilterCardOpen.value = false;
+
+      isVendorCredentialsCardOpen.value = false;
+      isVendorInfoCardOpen.value = false;
     } else if (destination === 'change-company') {
       changeSwitchCompanyVisible(true);
     } else {
@@ -177,6 +189,8 @@
     isInterestsCardOpen.value = false;
     isAddedInterestCardOpen.value = false;
     isFilterCardOpen.value = true;
+    isVendorCredentialsCardOpen.value = false;
+    isVendorInfoCardOpen.value = false;
   }
 
   function handleCloseFilter() {
@@ -223,17 +237,9 @@
     isFilterCardOpen.value = true;
   }
 
-  function handleOpenFilterByUser() {
-    isFilterCardOpen.value = true;
-  }
-
   function handleAddCompany() {
     isAuthOpen.value = true;
     openAuthForm('company');
-  }
-
-  function handleOpenMySuggestions() {
-    isMySuggestionsOpen.value = true;
   }
 
   const isErrorPage = ref<boolean>(false);

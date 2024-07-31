@@ -128,7 +128,9 @@
             class="vue-recycle-scroller ready direction-vertical flex w-full max-w-[324px] flex-col gap-y-4 max-sm:w-[100vw]">
             <div
               class="flex w-full items-start justify-between rounded-lg border-2 bg-white p-4 pr-5 duration-200 hover:border-[#0017FC] hover:bg-[#1778EA] hover:bg-opacity-10">
-              <p class="text-[14px] cursor-pointer" @click="submit(interest.id)">{{ interest.description }}</p>
+              <p class="text-[14px] cursor-pointer" @click="submit(interest.id)">
+                {{ interest.name || interest.description || interest.article || interest.city || interest.amount || interest.vendor }}
+              </p>
               <div class="cursor-pointer" @click="remove(interest.id)">
                 <Trash2 />
               </div>

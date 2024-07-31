@@ -304,7 +304,7 @@
                   Поставщик
                 </p>
                 <SelectAll
-                  :list="vendors"
+                  :list="vendors?.map((item) => item.id)"
                   v-model="selectedVendors" />
               </div>
 
@@ -322,7 +322,7 @@
                   <ListboxOption
                     v-for="item in vendors"
                     :key="item.id"
-                    :value="item.id?.toString()"
+                    :value="item.id"
                     as="template">
                     <li
                       class="mx-1 my-1 cursor-pointer select-none rounded bg-gray-50 py-2 pl-3 pr-9 text-black"
