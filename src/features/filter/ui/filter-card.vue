@@ -231,7 +231,7 @@
           <p class="text-[20px] font-semibold text-[#101828]">Фильтр</p>
 
           <FilterInput
-            name="denomination"
+            name="name"
             label="Наименование"
             placeholder="Наименование" />
           <FilterInput name="article" label="Артикул" placeholder="Артикул" />
