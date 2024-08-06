@@ -24,7 +24,7 @@ export interface FormValues {
   destinations?: Array<number>;
 }
 
-const createAd = createMutation({
+const createAdMutation = createMutation({
   handler: (data: Offer) => $api.ads.createAd(data),
 });
 
@@ -39,27 +39,30 @@ const createBidMutation = createMutation({
     }),
 });
 
-export const getNomenclatures = createQuery({
-  handler: async (search) => await $api.nomenclatures.getNomenclatures({ query: search }).then((response) => {
-    nomenclatures.value = response.data;
+export const getNomenclaturesQuery = createQuery({
+  handler: async (search) =>
+    await $api.nomenclatures
+      .getNomenclatures({ query: search })
+      .then((response) => {
+        nomenclatures.value = response.data;
 
-    names.value = response.data.map((nomenclature) => {
-      return {
-        id: nomenclature.id,
-        name: nomenclature.name,
-      };
-    });
+        names.value = response.data.map((nomenclature) => {
+          return {
+            id: nomenclature.id,
+            name: nomenclature.name,
+          };
+        });
 
-    articles.value = response.data.map((nomenclature) => {
-      return {
-        id: nomenclature.id,
-        name: nomenclature.article,
-      };
-    });
-  }),
+        articles.value = response.data.map((nomenclature) => {
+          return {
+            id: nomenclature.id,
+            name: nomenclature.article,
+          };
+        });
+      }),
 });
 
-export const getDestinations = createQuery({
+export const getDestinationsQuery = createQuery({
   handler: () => $api.destinations.getDestinations(),
 });
 export const listDestinationsQuery = createQuery({
@@ -78,13 +81,11 @@ export const getBrands = createQuery({
 export const createNomenclature = createMutation({
   handler: async (data: FormValues) =>
     $api.nomenclatures.createNomenclature(
-      Object.assign(
-        {
-          name: data.name,
-          article: data.article,
-          destinations: data.destinations,
-        },
-      ),
+      Object.assign({
+        name: data.name,
+        article: data.article,
+        destinations: data.destinations,
+      }),
     ),
 });
 
@@ -92,13 +93,11 @@ export const updateNomenclature = createMutation({
   handler: async (data: FormValues) =>
     $api.nomenclatures.updateNomenclature(
       data.id ?? 1,
-      Object.assign(
-        {
-          name: data.name,
-          article: data.article,
-          destinations: data.destinations,
-        },
-      ),
+      Object.assign({
+        name: data.name,
+        article: data.article,
+        destinations: data.destinations,
+      }),
     ),
 });
 
@@ -115,8 +114,9 @@ export const names = ref();
 export const articles = ref();
 export const nomenclatures = ref();
 
-export const $nomenclatureType = createStore<TNomenclatureType>('default')
-  .reset([formClosed]);
+export const $nomenclatureType = createStore<TNomenclatureType>(
+  'default',
+).reset([formClosed]);
 
 export const $advertisementType = createStore<TAdvertisementType | null>(
   null,
@@ -131,12 +131,12 @@ sample({
   fn: (search) => ({
     search,
   }),
-  target: [getNomenclatures.start],
+  target: [getNomenclaturesQuery.start],
 });
 
 sample({
   clock: nomenclaturesGate.open,
-  to: getNomenclatures.start,
+  to: getNomenclaturesQuery.start,
 });
 
 sample({
@@ -164,20 +164,19 @@ sample({
   clock: formSubmitted,
   source: $nomenclatureType,
   filter: (src) => src === 'update',
-  fn: (_, clk) => (
-    {
-      id: clk.id,
-      name: clk.name,
-      article: clk.article,
-      destinations: clk.destinations,
-      count: clk.count,
-    }),
+  fn: (_, clk) => ({
+    id: clk.id,
+    name: clk.name,
+    article: clk.article,
+    destinations: clk.destinations,
+    count: clk.count,
+  }),
   target: [updateNomenclature.start],
 });
 
 sample({
   clock: createAdvertisementMounted,
-  target: [getDestinations.start, getCategories.start, getBrands.start],
+  target: [getDestinationsQuery.start, getCategories.start, getBrands.start],
 });
 
 sample({
@@ -223,12 +222,12 @@ sample({
     category: clk.category ?? '',
     brand: clk.brand ?? '',
   }),
-  target: [createAd.start, formClosed],
+  target: [createAdMutation.start, formClosed],
 });
 
 keepFresh(myRequestsQuery, {
   triggers: [
-    createAd.finished.success,
+    createAdMutation.finished.success,
     createBidMutation.finished.success,
   ],
   automatically: true,

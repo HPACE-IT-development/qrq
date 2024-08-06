@@ -4728,7 +4728,10 @@
           "info": {
             "$ref": "#/components/schemas/Item_info"
           },
-          "vendorTitle": {
+          "vendor_title": {
+            "type": "string"
+          },
+          "vendor_phone": {
             "type": "string"
           },
           "parsedDelivery": {

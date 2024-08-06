@@ -164,7 +164,6 @@ export interface Bid {
 
 export type Bids = Bid[];
 
-
 export interface Ad {
   id?: string;
   /**
@@ -201,7 +200,7 @@ export interface Ad {
   destinations?: number[];
 }
 
-export type Ads = Ad[]
+export type Ads = Ad[];
 
 export interface Offer {
   id?: string;
@@ -240,29 +239,30 @@ export interface Offer {
 }
 
 export interface cartQWEP {
-  accountId: number,
-  basketForm?: any,
-  basketId: string,
-  basketItems: basketItem[],
-  hasPartOrder: boolean,
-  vendorId: string,
-  vendorTitle: string
+  accountId: number;
+  basketForm?: any;
+  basketId: string;
+  basketItems: basketItem[];
+  hasPartOrder: boolean;
+  vendorId: string;
+  vendor_title: string;
+  vendor_phone: string;
 }
 
 export interface basketItem {
-  article: string,
-  available: any,
-  basketItemId: string,
-  brand: string,
-  delivery?: any,
-  fields?: any,
-  orderHash: string,
-  price: string,
-  priceTotal: string,
-  quantity: number,
-  amount?: number,
-  title: string,
-  warehouse: string
+  article: string;
+  available: any;
+  basketItemId: string;
+  brand: string;
+  delivery?: any;
+  fields?: any;
+  orderHash: string;
+  price: string;
+  priceTotal: string;
+  quantity: number;
+  amount?: number;
+  title: string;
+  warehouse: string;
 }
 
 export type Offers = Offer[];
@@ -466,7 +466,9 @@ export interface Item {
   quantity?: ItemQuantity;
   qwepCross?: string;
   info?: ItemInfo;
-  vendorTitle?: string;
+  search_id: string;
+  vendor_title: string;
+  vendor_phone?: string;
   parsedDelivery?: string;
 }
 
@@ -590,7 +592,13 @@ export interface VendorData {
   website?: string;
 }
 
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from 'axios';
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  HeadersDefaults,
+  ResponseType,
+} from 'axios';
 import axios from 'axios';
 
 export type QueryParamsType = Record<string | number, any>;
@@ -640,11 +648,11 @@ export class HttpClient<SecurityDataType = unknown> {
   private format?: ResponseType;
 
   constructor({
-                securityWorker,
-                secure,
-                format,
-                ...axiosConfig
-              }: ApiConfig<SecurityDataType> = {}) {
+    securityWorker,
+    secure,
+    format,
+    ...axiosConfig
+  }: ApiConfig<SecurityDataType> = {}) {
     this.instance = axios.create({
       ...axiosConfig,
       baseURL:
@@ -672,9 +680,9 @@ export class HttpClient<SecurityDataType = unknown> {
       ...(params2 || {}),
       headers: {
         ...((method &&
-            this.instance.defaults.headers[
-              method.toLowerCase() as keyof HeadersDefaults
-              ]) ||
+          this.instance.defaults.headers[
+            method.toLowerCase() as keyof HeadersDefaults
+          ]) ||
           {}),
         ...(params1.headers || {}),
         ...((params2 && params2.headers) || {}),
@@ -709,7 +717,13 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   public request = async <T = any, _E = any>({
-    secure, path, type, query, format, body, ...params
+    secure,
+    path,
+    type,
+    query,
+    format,
+    body,
+    ...params
   }: FullRequestParams): Promise<AxiosResponse<T>> => {
     const secureParams =
       ((typeof secure === 'boolean' ? secure : this.secure) &&
@@ -2292,6 +2306,15 @@ export class Api<
         ...params,
       }),
 
+    deleteAccount: (accountId: number, params: RequestParams = {}) =>
+      this.request<Vendors, Error>({
+        path: `/accounts/${accountId}`,
+        method: 'DELETE',
+        secure: true,
+        format: 'json',
+        ...params,
+      }),
+
     /**
      * No description
      *
@@ -2302,15 +2325,15 @@ export class Api<
      * @secure
      */
     createAccount: (data: Vendor, params: RequestParams = {}) =>
-        this.request<Vendors, Error>({
-          path: `/accounts/`,
-          method: 'POST',
-          body: data,
-          secure: true,
-          type: ContentType.FormData,
-          format: 'json',
-          ...params,
-        }),
+      this.request<Vendors, Error>({
+        path: `/accounts/`,
+        method: 'POST',
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
+        format: 'json',
+        ...params,
+      }),
   };
   cart = {
     /**

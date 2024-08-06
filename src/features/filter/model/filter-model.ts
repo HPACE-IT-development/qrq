@@ -52,7 +52,7 @@ sample({
         },
       },
       exclude: {
-        brand: clk.brands,
+        // brand: clk.brands,
         vendor: clk.vendors,
         city_id: clk.cities,
       },
